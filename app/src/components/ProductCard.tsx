@@ -208,47 +208,46 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onOpenCart, onAddToC
               ID: {product.id}
             </p>
           )}
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-[10px] pb-8">
-            <button
-              onClick={() => {
-                onAddToCart(product);
-                onOpenCart();
-              }}
-              className="flex-1 basis-0 min-w-0 h-[66px] bg-[#80D1C1] rounded-[30px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-center"
-            >
-              <span className="text-sm font-semibold leading-[1.174] text-black">Купить сейчас</span>
-            </button>
-            {productQuantity > 0 ? (
-              <div className="flex-1 basis-0 min-w-0 h-[66px] bg-[#80D1C1] rounded-[30px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-between px-3">
-                <button
-                  onClick={() => onRemoveFromCart(product.id)}
-                  className="w-[28px] h-[28px] rounded-full bg-white/30 flex items-center justify-center flex-shrink-0"
-                >
-                  <span className="text-base font-medium text-black/70">−</span>
-                </button>
-                <div className="flex flex-col items-center leading-tight">
-                  <span className="text-lg font-bold text-black">{productQuantity}</span>
-                  <span className="text-[10px] font-medium text-black/70">В</span>
-                  <span className="text-[10px] font-medium text-black/70 -mt-0.5">корзине</span>
-                </div>
-                <button
-                  onClick={() => onAddToCart(product)}
-                  className="w-[28px] h-[28px] rounded-full bg-white/30 flex items-center justify-center flex-shrink-0"
-                >
-                  <span className="text-base font-medium text-black/70">+</span>
-                </button>
+        {/* Action Buttons - wider than text area */}
+        <div className="flex gap-[10px] px-4 pb-8">
+          <button
+            onClick={() => {
+              onAddToCart(product);
+              onOpenCart();
+            }}
+            className="w-[180px] h-[66px] bg-[#80D1C1] rounded-[30px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-center"
+          >
+            <span className="text-sm font-semibold leading-[1.174] text-black">Купить сейчас</span>
+          </button>
+          {productQuantity > 0 ? (
+            <div className="w-[180px] h-[66px] bg-[#80D1C1] rounded-[30px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-between px-4">
+              <button
+                onClick={() => onRemoveFromCart(product.id)}
+                className="w-[32px] h-[32px] rounded-full bg-white/30 flex items-center justify-center"
+              >
+                <span className="text-lg font-medium text-black/70">−</span>
+              </button>
+              <div className="flex flex-col items-center">
+                <span className="text-lg font-bold text-black">{productQuantity}</span>
+                <span className="text-[11px] font-medium text-black/70 leading-none">В корзине</span>
               </div>
-            ) : (
               <button
                 onClick={() => onAddToCart(product)}
-                className="flex-1 basis-0 min-w-0 h-[66px] bg-[#80D1C1] rounded-[30px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-center"
+                className="w-[32px] h-[32px] rounded-full bg-white/30 flex items-center justify-center"
               >
-                <span className="text-sm font-semibold leading-[1.174] text-black">Добавить в корзину</span>
+                <span className="text-lg font-medium text-black/70">+</span>
               </button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => onAddToCart(product)}
+              className="w-[180px] h-[66px] bg-[#80D1C1] rounded-[30px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-center"
+            >
+              <span className="text-sm font-semibold leading-[1.174] text-black">Добавить в корзину</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
