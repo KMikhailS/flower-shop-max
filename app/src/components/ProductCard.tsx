@@ -19,14 +19,19 @@ interface ProductCardProps {
   onClose: () => void;
   onOpenCart: () => void;
   onAddToCart: (product: Product) => void;
+  onRemoveFromCart: (productId: number) => void;
   cartItems: CartItemData[];
   userInfo?: UserInfo;
   onEdit?: () => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onOpenCart, onAddToCart, cartItems, userInfo, onEdit }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onOpenCart, onAddToCart, onRemoveFromCart, cartItems, userInfo, onEdit }) => {
   // Вычисляем общее количество товаров в корзине
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Находим количество данного товара в корзине
+  const productInCart = cartItems.find(item => item.product.id === product.id);
+  const productQuantity = productInCart?.quantity || 0;
 
   useLockBodyScroll(true);
 
@@ -215,14 +220,33 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onOpenCart, onAddToC
             >
               <span className="text-sm font-semibold leading-[1.174] text-black">Купить сейчас</span>
             </button>
-            <button
-              onClick={() => {
-                onAddToCart(product);
-              }}
-              className="flex-1 h-[66px] bg-[#80D1C1] rounded-[30px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-center"
-            >
-              <span className="text-sm font-semibold leading-[1.174] text-black">Добавить в корзину</span>
-            </button>
+            {productQuantity > 0 ? (
+              <div className="flex-1 h-[66px] bg-[#80D1C1] rounded-[30px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-between px-4">
+                <button
+                  onClick={() => onRemoveFromCart(product.id)}
+                  className="w-[36px] h-[36px] rounded-full bg-white/30 flex items-center justify-center"
+                >
+                  <span className="text-xl font-semibold text-black">−</span>
+                </button>
+                <div className="flex flex-col items-center">
+                  <span className="text-xl font-bold text-black">{productQuantity}</span>
+                  <span className="text-xs font-medium text-black/70">В корзине</span>
+                </div>
+                <button
+                  onClick={() => onAddToCart(product)}
+                  className="w-[36px] h-[36px] rounded-full bg-white/30 flex items-center justify-center"
+                >
+                  <span className="text-xl font-semibold text-black">+</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => onAddToCart(product)}
+                className="flex-1 h-[66px] bg-[#80D1C1] rounded-[30px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-center"
+              >
+                <span className="text-sm font-semibold leading-[1.174] text-black">Добавить в корзину</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

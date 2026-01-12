@@ -182,6 +182,26 @@ function App() {
     setCartItems(prevItems => prevItems.filter(item => item.product.id !== productId));
   };
 
+  // Уменьшает количество или удаляет товар при qty=1
+  const handleRemoveFromCart = (productId: number) => {
+    setCartItems(prevItems => {
+      const item = prevItems.find(i => i.product.id === productId);
+      if (!item) return prevItems;
+
+      if (item.quantity <= 1) {
+        // Удаляем товар из корзины
+        return prevItems.filter(i => i.product.id !== productId);
+      }
+
+      // Уменьшаем количество
+      return prevItems.map(i =>
+        i.product.id === productId
+          ? { ...i, quantity: i.quantity - 1 }
+          : i
+      );
+    });
+  };
+
   const handleOpenStoreAddresses = (fromCart: boolean = false) => {
     setReturnToCart(fromCart);
     if (fromCart) {
@@ -847,6 +867,7 @@ function App() {
           onClose={() => setSelectedProduct(null)}
           onOpenCart={handleOpenCart}
           onAddToCart={handleAddToCart}
+          onRemoveFromCart={handleRemoveFromCart}
           cartItems={cartItems}
           userInfo={userInfo || undefined}
           onEdit={() => handleEditProduct(selectedProduct)}
