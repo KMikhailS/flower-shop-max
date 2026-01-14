@@ -6,7 +6,7 @@ import uvicorn
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, FSInputFile
 
 from database import init_db, add_or_update_user, get_user, update_user_mode
 from fastapi_app import app as fastapi_app
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Bot token from environment
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-DADATA_API_KEY = os.getenv("DADATA_API_KEY")
+APP_URL = os.getenv("APP_URL")
 
 # Create bot and dispatcher
 bot = Bot(token=BOT_TOKEN)
@@ -43,15 +43,25 @@ async def start_handler(message: types.Message):
             [
                 InlineKeyboardButton(
                     text="🌸 Открыть магазин",
-                    web_app=WebAppInfo(url="https://cadra.online/")
+                    web_app=WebAppInfo(url=APP_URL)
                 )
             ]
         ]
     )
-    logger.info("DADATA_API_KEY VALUE " + DADATA_API_KEY)
 
-    await message.answer(
-        text="Добро пожаловать в FanFanTulpan! 🌷\n\nНажмите кнопку ниже, чтобы открыть наш магазин цветов.",
+    # Get path to welcome image
+    image_path = os.path.join(os.path.dirname(__file__), "images", "fanfan-main.jpg")
+    photo = FSInputFile(image_path)
+
+    caption = """Цветы онлайн  это просто.
+Fan Fan Tulpan в Telegram:
+выбрал букет, оформил доставку, подарил эмоции!!!
+
+Жми на кнопку и выбирай свежие цветы уже сейчас."""
+
+    await message.answer_photo(
+        photo=photo,
+        caption=caption,
         reply_markup=keyboard
     )
 
