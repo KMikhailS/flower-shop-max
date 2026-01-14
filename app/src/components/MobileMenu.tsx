@@ -42,7 +42,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
     ? [
         ...baseMenuItems,
         { id: 7, label: 'separator' }, // Separator after "Обратная связь"
-        { id: 8, label: 'Заказы' },
+        { id: 8, label: 'Управление заказами' },
         { id: 9, label: 'Настройки' }
       ]
     : baseMenuItems;
@@ -85,7 +85,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                     onOpenPaymentInfo();
                   } else if (item.label === 'Мои заказы') {
                     onOpenMyOrders();
-                  } else if (item.label === 'Заказы') {
+                  } else if (item.label === 'Управление заказами') {
                     if (onOpenAdminOrders) {
                       onOpenAdminOrders();
                     }

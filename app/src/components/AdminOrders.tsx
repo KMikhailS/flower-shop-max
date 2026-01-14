@@ -294,7 +294,7 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
     <div className="fixed inset-0 bg-white z-50 max-w-[402px] mx-auto">
       <div className="h-full overflow-y-auto">
         <AppHeader
-          title="Заказы"
+          title="Управление заказами"
           actionType="menu-text"
           onAction={onMenuClick}
         />
