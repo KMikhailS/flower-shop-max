@@ -1,4 +1,6 @@
 import logging
+import os
+from dotenv import load_dotenv
 from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +9,9 @@ from fastapi.staticfiles import StaticFiles
 from routers import users, goods, uploads, shop_addresses, health, promo_banners, categories, orders, dadata
 
 logger = logging.getLogger(__name__)
+load_dotenv()
+
+APP_URL = os.getenv("APP_URL")
 
 # Create FastAPI app
 app = FastAPI(title="FanFanTulpan API", version="1.0.0")
@@ -39,8 +44,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # Vite dev server
         "http://localhost:5173",  # Alternative Vite port
-        "https://cadra.online",   # Production domain
-        "https://www.cadra.online"
+        APP_URL
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
