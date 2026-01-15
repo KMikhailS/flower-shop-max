@@ -231,10 +231,55 @@ function App() {
 
   const buildSupportChatLink = (chatId: string) => {
     const normalized = chatId.trim();
-    if (normalized.startsWith('-100') && normalized.length > 4) {
-      return `https://t.me/c/${normalized.slice(4)}`;
+    if (!normalized) {
+      return null;
     }
-    return `tg://user?id=${normalized}`;
+
+    if (/^https?:\/\//.test(normalized)) {
+      return { url: normalized, preferTelegram: true };
+    }
+
+    if (normalized.startsWith('@')) {
+      return { url: `https://t.me/${normalized.slice(1)}`, preferTelegram: true };
+    }
+
+    if (/^-?\d+$/.test(normalized)) {
+      if (normalized.startsWith('-100') && normalized.length > 4) {
+        return { url: `https://t.me/c/${normalized.slice(4)}/1`, preferTelegram: true };
+      }
+      return { url: `tg://user?id=${normalized}`, preferTelegram: false };
+    }
+
+    return null;
+  };
+
+  const openSupportLink = (url: string, preferTelegram: boolean) => {
+    if (preferTelegram && webApp?.openTelegramLink) {
+      try {
+        webApp.openTelegramLink(url);
+        return true;
+      } catch (error) {
+        console.warn('openTelegramLink failed:', error);
+      }
+    }
+
+    if (webApp?.openLink) {
+      try {
+        webApp.openLink(url);
+        return true;
+      } catch (error) {
+        console.warn('openLink failed:', error);
+      }
+    }
+
+    try {
+      window.open(url, '_blank');
+      return true;
+    } catch (error) {
+      console.warn('window.open failed:', error);
+    }
+
+    return false;
   };
 
   const handleOpenFeedback = async () => {
@@ -251,12 +296,15 @@ function App() {
       }
 
       const chatLink = buildSupportChatLink(supportChatId);
-      if (webApp?.openTelegramLink) {
-        webApp.openTelegramLink(chatLink);
-      } else if (webApp?.openLink) {
-        webApp.openLink(chatLink);
-      } else {
-        window.open(chatLink, '_blank');
+      if (!chatLink) {
+        webApp?.showAlert?.('Неверный формат ID чата поддержки');
+        return;
+      }
+
+      const opened = openSupportLink(chatLink.url, chatLink.preferTelegram);
+      if (!opened) {
+        webApp?.showAlert?.('Не удалось открыть чат поддержки');
+        return;
       }
       setIsMenuOpen(false);
     } catch (error) {
