@@ -954,7 +954,7 @@ export async function fetchUserByUsername(
   username: string,
   initData: string
 ): Promise<UserInfo> {
-  const response = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(username)}`, {
+  const response = await fetch(`${API_BASE_URL}/users/by-username/${encodeURIComponent(username)}`, {
     method: 'GET',
     headers: {
       'Authorization': `tma ${initData}`,

@@ -40,7 +40,7 @@ async def get_current_user(user_id: int = Depends(verify_telegram_init_data)):
     )
 
 
-@router.get("/{username}", response_model=UserInfoDTO)
+@router.get("/by-username/{username}", response_model=UserInfoDTO)
 async def get_user_by_name(
     username: str,
     user_id: int = Depends(verify_admin_mode)
