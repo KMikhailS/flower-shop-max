@@ -703,32 +703,6 @@ const Settings: React.FC<SettingsProps> = ({
                       </div>
                     </div>
 
-                    {/* User Mode */}
-                    <div className="flex flex-col gap-2">
-                      <span className="text-sm text-gray-medium">Режим пользователя</span>
-                      <div className="flex items-center gap-3">
-                        <span className={`text-sm ${editUserMode === 'USER' ? 'font-semibold' : 'font-normal text-gray-medium'}`}>
-                          Пользователь
-                        </span>
-                        <button
-                          onClick={() => setEditUserMode(editUserMode === 'ADMIN' ? 'USER' : 'ADMIN')}
-                          disabled={isSaving}
-                          className={`relative w-[60px] h-[32px] rounded-full transition-colors ${
-                            editUserMode === 'ADMIN' ? 'bg-teal' : 'bg-gray-300'
-                          } disabled:opacity-50`}
-                        >
-                          <div
-                            className={`absolute top-[4px] w-[24px] h-[24px] bg-white rounded-full shadow-md transition-transform ${
-                              editUserMode === 'ADMIN' ? 'translate-x-[32px]' : 'translate-x-[4px]'
-                            }`}
-                          />
-                        </button>
-                        <span className={`text-sm ${editUserMode === 'ADMIN' ? 'font-semibold' : 'font-normal text-gray-medium'}`}>
-                          Администратор
-                        </span>
-                      </div>
-                    </div>
-
                     {/* Save Button */}
                     <button
                       onClick={handleSaveUser}
