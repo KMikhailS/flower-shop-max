@@ -553,7 +553,14 @@ function App() {
           description: good.description,
           category: good.category,
           status: good.status,
+          sort_order: good.sort_order ?? good.id,
         };
+      });
+
+      mappedProducts.sort((a, b) => {
+        const aOrder = a.sort_order ?? a.id;
+        const bOrder = b.sort_order ?? b.id;
+        return aOrder - bOrder;
       });
 
       setProducts(mappedProducts);
@@ -573,6 +580,7 @@ function App() {
     non_discount_price?: number;
     description: string;
     imageFiles: File[];
+    sort_order?: number;
   }) => {
     if (!webApp || !webApp.initData) {
       alert('Ошибка: недоступен Telegram WebApp');
@@ -590,6 +598,7 @@ function App() {
             price: data.price,
             non_discount_price: data.non_discount_price,
             description: data.description,
+            sort_order: data.sort_order,
           },
           webApp.initData
         );
@@ -611,6 +620,7 @@ function App() {
             price: data.price,
             non_discount_price: data.non_discount_price,
             description: data.description,
+            sort_order: data.sort_order,
           },
           webApp.initData
         );
