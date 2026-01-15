@@ -414,7 +414,7 @@ const Settings: React.FC<SettingsProps> = ({
                 {/* Support Chat ID */}
                 <div className="flex flex-col gap-3">
                   <label className="text-base font-semibold text-black">
-                    ID чата службы поддержки
+                    Чат службы поддержки
                   </label>
                   <input
                     type="text"
