@@ -229,9 +229,6 @@ const Settings: React.FC<SettingsProps> = ({
     }
   };
 
-  // Helper to map role/mode to Russian
-  const mapToRussian = (value: string) => value === 'ADMIN' ? 'Администратор' : 'Пользователь';
-
   const handleModeToggle = () => {
     const newMode = currentMode === 'ADMIN' ? 'USER' : 'ADMIN';
     setCurrentMode(newMode);
