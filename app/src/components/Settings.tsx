@@ -256,12 +256,6 @@ const Settings: React.FC<SettingsProps> = ({
 
       // Save support chat ID if provided
       if (supportChatId.trim()) {
-        // Validate: digits with optional minus sign (for groups/supergroups)
-        if (!/^-?\d+$/.test(supportChatId.trim())) {
-          setError('ID чата поддержки должен быть числом (может быть отрицательным)');
-          setIsSaving(false);
-          return;
-        }
         await upsertSetting('SUPPORT_CHAT_ID', supportChatId.trim(), initData);
       }
 
