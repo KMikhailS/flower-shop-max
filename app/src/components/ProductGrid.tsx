@@ -13,6 +13,7 @@ export interface Product {
   description: string;
   category?: string;
   status?: string;
+  sort_order?: number;
 }
 
 interface ProductGridProps {

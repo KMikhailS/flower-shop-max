@@ -12,6 +12,7 @@ interface AdminProductCardProps {
     non_discount_price?: number;
     description: string;
     imageFiles: File[];
+    sort_order?: number;
   }) => void;
   editingProduct?: Product;
   onDelete?: () => void;
@@ -24,6 +25,7 @@ const AdminProductCard: React.FC<AdminProductCardProps> = ({ onClose, onSave, ed
   const [priceRub, setPriceRub] = useState('');
   const [nonDiscountPriceRub, setNonDiscountPriceRub] = useState('');
   const [description, setDescription] = useState('');
+  const [sortOrder, setSortOrder] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
@@ -83,6 +85,12 @@ const AdminProductCard: React.FC<AdminProductCardProps> = ({ onClose, onSave, ed
         setNonDiscountPriceRub('');
       }
       setDescription(editingProduct.description);
+      // Устанавливаем sort_order
+      if (editingProduct.sort_order !== undefined) {
+        setSortOrder(String(editingProduct.sort_order));
+      } else {
+        setSortOrder('');
+      }
 
       // Устанавливаем превью изображений из товара (не File, а URL)
       if (editingProduct.images && editingProduct.images.length > 0) {
@@ -454,6 +462,11 @@ const AdminProductCard: React.FC<AdminProductCardProps> = ({ onClose, onSave, ed
       ? Math.round(Number(nonDiscountPriceRub))
       : undefined;
 
+    // Sort order is optional
+    const sortOrderValue = sortOrder.trim() && !isNaN(Number(sortOrder))
+      ? Math.round(Number(sortOrder))
+      : undefined;
+
     onSave({
       id: editingProduct?.id,
       name: name.trim(),
@@ -462,6 +475,7 @@ const AdminProductCard: React.FC<AdminProductCardProps> = ({ onClose, onSave, ed
       description: description.trim(),
       imageFiles: selectedFiles,
       non_discount_price: nonDiscountPrice,
+      sort_order: sortOrderValue,
     });
 
     // Check if image order changed and update if needed
@@ -735,7 +749,7 @@ const AdminProductCard: React.FC<AdminProductCardProps> = ({ onClose, onSave, ed
           </div>
 
           {/* Description Textarea */}
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="block text-sm font-semibold text-black mb-2">
               Описание *
             </label>
@@ -745,6 +759,21 @@ const AdminProductCard: React.FC<AdminProductCardProps> = ({ onClose, onSave, ed
               placeholder="Описание товара"
               rows={4}
               className="w-full px-4 py-3 rounded-[20px] bg-gray-light border-none text-base text-black placeholder-gray-medium focus:outline-none focus:ring-2 focus:ring-teal resize-none"
+            />
+          </div>
+
+          {/* Sort Order Input */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-black mb-2">
+              Позиция карточки
+            </label>
+            <input
+              type="number"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              min="0"
+              step="1"
+              className="w-full px-4 py-3 rounded-[20px] bg-gray-light border-none text-base text-black placeholder-gray-medium focus:outline-none focus:ring-2 focus:ring-teal"
             />
           </div>
 

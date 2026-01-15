@@ -54,7 +54,8 @@ async def get_goods():
                 non_discount_price=good.get("non_discount_price"),
                 description=good["description"],
                 images=[ImageDTO(**img) for img in good["images"]],
-                status=good["status"]
+                status=good["status"],
+                sort_order=good["sort_order"] or good["id"]
             )
             for good in goods
         ]
@@ -90,7 +91,8 @@ async def get_all_goods_endpoint(user_id: int = Depends(verify_telegram_init_dat
                 non_discount_price=good.get("non_discount_price"),
                 description=good["description"],
                 images=[ImageDTO(**img) for img in good["images"]],
-                status=good["status"]
+                status=good["status"],
+                sort_order=good["sort_order"] or good["id"]
             )
             for good in goods
         ]
@@ -143,7 +145,8 @@ async def create_good_card_endpoint(
             non_discount_price=created_good.get("non_discount_price"),
             description=created_good["description"],
             images=[ImageDTO(**img) for img in created_good["images"]],
-            status=created_good["status"]
+            status=created_good["status"],
+            sort_order=created_good["sort_order"] or created_good["id"]
         )
     except Exception as e:
         logger.error(f"Failed to create good card: {str(e)}")
@@ -184,7 +187,8 @@ async def update_good_card_endpoint(
             category_id=category_id,
             price=good_card.price,
             description=good_card.description,
-            non_discount_price=good_card.non_discount_price
+            non_discount_price=good_card.non_discount_price,
+            sort_order=good_card.sort_order
         )
 
         # Return response
@@ -196,7 +200,8 @@ async def update_good_card_endpoint(
             non_discount_price=updated_good.get("non_discount_price"),
             description=updated_good["description"],
             images=[ImageDTO(**img) for img in updated_good["images"]],
-            status=updated_good["status"]
+            status=updated_good["status"],
+            sort_order=updated_good["sort_order"] or updated_good["id"]
         )
     except ValueError as e:
         logger.error(f"Good not found: {str(e)}")
@@ -347,7 +352,8 @@ async def block_good_endpoint(
             non_discount_price=updated_good.get("non_discount_price"),
             description=updated_good["description"],
             images=[ImageDTO(**img) for img in updated_good["images"]],
-            status=updated_good["status"]
+            status=updated_good["status"],
+            sort_order=updated_good["sort_order"] or updated_good["id"]
         )
     except ValueError as e:
         logger.error(f"Good not found: {str(e)}")
@@ -386,7 +392,8 @@ async def activate_good_endpoint(
             non_discount_price=updated_good.get("non_discount_price"),
             description=updated_good["description"],
             images=[ImageDTO(**img) for img in updated_good["images"]],
-            status=updated_good["status"]
+            status=updated_good["status"],
+            sort_order=updated_good["sort_order"] or updated_good["id"]
         )
     except ValueError as e:
         logger.error(f"Good not found: {str(e)}")
@@ -426,7 +433,8 @@ async def reorder_good_images_endpoint(
             non_discount_price=updated_good.get("non_discount_price"),
             description=updated_good["description"],
             images=[ImageDTO(**img) for img in updated_good["images"]],
-            status=updated_good["status"]
+            status=updated_good["status"],
+            sort_order=updated_good["sort_order"] or updated_good["id"]
         )
     except ValueError as e:
         logger.error(f"Good not found: {str(e)}")

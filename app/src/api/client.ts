@@ -21,6 +21,7 @@ export interface GoodCardData {
   price: number;
   non_discount_price?: number;
   description: string;
+  sort_order?: number;
 }
 
 // Image DTO for product images
@@ -39,6 +40,7 @@ export interface GoodDTO {
   description: string;
   images: ImageDTO[];
   status: string;
+  sort_order: number;
 }
 
 // Promo banner from backend

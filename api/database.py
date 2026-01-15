@@ -46,6 +46,7 @@ async def init_db():
                 price INTEGER NOT NULL,
                 non_discount_price INTEGER,
                 description TEXT,
+                sort_order INTEGER,
                 FOREIGN KEY (category_id) REFERENCES categories(id)
             )
         """)
@@ -229,10 +230,16 @@ async def create_good_card(
                VALUES (?, ?, 'NEW', ?, ?, ?, ?, ?)""",
             (current_time, current_time, name, category_id, price, non_discount_price, description)
         )
+        good_id = cursor.lastrowid
+
+        # Set sort_order = id for new goods
+        await db.execute(
+            "UPDATE goods SET sort_order = ? WHERE id = ?",
+            (good_id, good_id)
+        )
         await db.commit()
 
         # Get the created good card
-        good_id = cursor.lastrowid
         cursor = await db.execute(
             """SELECT g.*, c.title AS category
                FROM goods g
@@ -256,7 +263,8 @@ async def update_good_card(
     category_id: int,
     price: int,
     description: str,
-    non_discount_price: Optional[int] = None
+    non_discount_price: Optional[int] = None,
+    sort_order: Optional[int] = None
 ) -> dict:
     """Update existing good card"""
     async with aiosqlite.connect(DB_PATH) as db:
@@ -264,12 +272,20 @@ async def update_good_card(
         current_time = datetime.now().isoformat()
 
         # Update the good
-        await db.execute(
-            """UPDATE goods
-               SET name = ?, category_id = ?, price = ?, non_discount_price = ?, description = ?, changestamp = ?
-               WHERE id = ?""",
-            (name, category_id, price, non_discount_price, description, current_time, good_id)
-        )
+        if sort_order is not None:
+            await db.execute(
+                """UPDATE goods
+                   SET name = ?, category_id = ?, price = ?, non_discount_price = ?, description = ?, sort_order = ?, changestamp = ?
+                   WHERE id = ?""",
+                (name, category_id, price, non_discount_price, description, sort_order, current_time, good_id)
+            )
+        else:
+            await db.execute(
+                """UPDATE goods
+                   SET name = ?, category_id = ?, price = ?, non_discount_price = ?, description = ?, changestamp = ?
+                   WHERE id = ?""",
+                (name, category_id, price, non_discount_price, description, current_time, good_id)
+            )
         await db.commit()
 
         # Get the updated good with images
@@ -340,7 +356,7 @@ async def get_goods_by_status(status: str = 'NEW') -> list[dict]:
                LEFT JOIN categories c ON g.category_id = c.id
                LEFT JOIN goods_images gi ON g.id = gi.good_id
                WHERE g.status = ?
-               ORDER BY g.id DESC, gi.display_order ASC""",
+               ORDER BY g.sort_order ASC, gi.display_order ASC""",
             (status,)
         )
         rows = await cursor.fetchall()
@@ -386,7 +402,7 @@ async def get_all_goods() -> list[dict]:
                FROM goods g
                LEFT JOIN categories c ON g.category_id = c.id
                LEFT JOIN goods_images gi ON g.id = gi.good_id
-               ORDER BY g.id DESC, gi.display_order ASC"""
+               ORDER BY g.sort_order ASC, gi.display_order ASC"""
         )
         rows = await cursor.fetchall()
 
