@@ -9,7 +9,10 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
-  CategoryDTO
+  CategoryDTO,
+  fetchUserByUsername,
+  updateUser,
+  UserInfo
 } from '../api/client';
 
 interface SettingsProps {
@@ -30,7 +33,7 @@ const Settings: React.FC<SettingsProps> = ({
   onModeChange
 }) => {
   const [currentMode, setCurrentMode] = useState<string>(userMode || 'USER');
-  const [activeTab, setActiveTab] = useState<'notifications' | 'categories'>('notifications');
+  const [activeTab, setActiveTab] = useState<'notifications' | 'categories' | 'users'>('notifications');
 
   // Notification settings state
   const [supportChatId, setSupportChatId] = useState<string>('');
@@ -47,6 +50,13 @@ const Settings: React.FC<SettingsProps> = ({
   const [editingCategoryTitle, setEditingCategoryTitle] = useState<string>('');
   const [newCategoryTitle, setNewCategoryTitle] = useState<string>('');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
+
+  // Users tab state
+  const [searchUsername, setSearchUsername] = useState<string>('');
+  const [foundUser, setFoundUser] = useState<UserInfo | null>(null);
+  const [editUserRole, setEditUserRole] = useState<string>('');
+  const [editUserMode, setEditUserMode] = useState<string>('');
+  const [isSearching, setIsSearching] = useState(false);
 
   // Common state
   const [isLoading, setIsLoading] = useState(false);
@@ -179,6 +189,48 @@ const Settings: React.FC<SettingsProps> = ({
       setIsSaving(false);
     }
   };
+
+  // User search and update handlers
+  const handleSearchUser = async () => {
+    if (!initData || !searchUsername.trim()) return;
+
+    setIsSearching(true);
+    setError(null);
+    setFoundUser(null);
+
+    try {
+      const user = await fetchUserByUsername(searchUsername.trim(), initData);
+      setFoundUser(user);
+      setEditUserRole(user.role);
+      setEditUserMode(user.mode);
+    } catch (err) {
+      console.error('Failed to find user:', err);
+      setError('Пользователь не найден');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSaveUser = async () => {
+    if (!initData || !foundUser) return;
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      const updatedUser = await updateUser(foundUser.id, editUserRole, editUserMode, initData);
+      setFoundUser(updatedUser);
+      alert('Пользователь успешно обновлён!');
+    } catch (err) {
+      console.error('Failed to update user:', err);
+      setError('Ошибка при обновлении пользователя');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Helper to map role/mode to Russian
+  const mapToRussian = (value: string) => value === 'ADMIN' ? 'Администратор' : 'Пользователь';
 
   const handleModeToggle = () => {
     const newMode = currentMode === 'ADMIN' ? 'USER' : 'ADMIN';
@@ -335,7 +387,7 @@ const Settings: React.FC<SettingsProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={() => setActiveTab('notifications')}
-                className={`flex-1 py-2 px-4 rounded-[20px] text-sm font-medium transition-colors ${
+                className={`flex-1 py-2 px-3 rounded-[20px] text-sm font-medium transition-colors ${
                   activeTab === 'notifications'
                     ? 'bg-teal text-white'
                     : 'bg-gray-200 text-gray-600'
@@ -345,13 +397,23 @@ const Settings: React.FC<SettingsProps> = ({
               </button>
               <button
                 onClick={() => setActiveTab('categories')}
-                className={`flex-1 py-2 px-4 rounded-[20px] text-sm font-medium transition-colors ${
+                className={`flex-1 py-2 px-3 rounded-[20px] text-sm font-medium transition-colors ${
                   activeTab === 'categories'
                     ? 'bg-teal text-white'
                     : 'bg-gray-200 text-gray-600'
                 }`}
               >
                 Категории
+              </button>
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`flex-1 py-2 px-3 rounded-[20px] text-sm font-medium transition-colors ${
+                  activeTab === 'users'
+                    ? 'bg-teal text-white'
+                    : 'bg-gray-200 text-gray-600'
+                }`}
+              >
+                Пользователи
               </button>
             </div>
 
@@ -577,6 +639,107 @@ const Settings: React.FC<SettingsProps> = ({
                         )}
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Users Tab */}
+            {activeTab === 'users' && (
+              <div className="flex flex-col gap-4">
+                {/* Search User */}
+                <div className="flex flex-col gap-3">
+                  <label className="text-base font-semibold text-black">
+                    Пользователь
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={searchUsername}
+                      onChange={(e) => setSearchUsername(e.target.value)}
+                      placeholder="Введите username"
+                      disabled={isSearching || isSaving}
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-[20px] focus:outline-none focus:border-teal disabled:opacity-50"
+                    />
+                    <button
+                      onClick={handleSearchUser}
+                      disabled={isSearching || isSaving || !searchUsername.trim()}
+                      className="px-4 py-3 bg-teal text-white rounded-[20px] disabled:opacity-50"
+                    >
+                      {isSearching ? '...' : 'Показать'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* User Info */}
+                {foundUser && (
+                  <div className="flex flex-col gap-4 p-4 bg-gray-50 rounded-[20px]">
+                    {/* User ID */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm text-gray-medium">ID пользователя</span>
+                      <span className="text-base font-medium text-black">{foundUser.id}</span>
+                    </div>
+
+                    {/* User Role */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-sm text-gray-medium">Роль пользователя</span>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-sm ${editUserRole === 'USER' ? 'font-semibold' : 'font-normal text-gray-medium'}`}>
+                          Пользователь
+                        </span>
+                        <button
+                          onClick={() => setEditUserRole(editUserRole === 'ADMIN' ? 'USER' : 'ADMIN')}
+                          disabled={isSaving}
+                          className={`relative w-[60px] h-[32px] rounded-full transition-colors ${
+                            editUserRole === 'ADMIN' ? 'bg-teal' : 'bg-gray-300'
+                          } disabled:opacity-50`}
+                        >
+                          <div
+                            className={`absolute top-[4px] w-[24px] h-[24px] bg-white rounded-full shadow-md transition-transform ${
+                              editUserRole === 'ADMIN' ? 'translate-x-[32px]' : 'translate-x-[4px]'
+                            }`}
+                          />
+                        </button>
+                        <span className={`text-sm ${editUserRole === 'ADMIN' ? 'font-semibold' : 'font-normal text-gray-medium'}`}>
+                          Администратор
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* User Mode */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-sm text-gray-medium">Режим пользователя</span>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-sm ${editUserMode === 'USER' ? 'font-semibold' : 'font-normal text-gray-medium'}`}>
+                          Пользователь
+                        </span>
+                        <button
+                          onClick={() => setEditUserMode(editUserMode === 'ADMIN' ? 'USER' : 'ADMIN')}
+                          disabled={isSaving}
+                          className={`relative w-[60px] h-[32px] rounded-full transition-colors ${
+                            editUserMode === 'ADMIN' ? 'bg-teal' : 'bg-gray-300'
+                          } disabled:opacity-50`}
+                        >
+                          <div
+                            className={`absolute top-[4px] w-[24px] h-[24px] bg-white rounded-full shadow-md transition-transform ${
+                              editUserMode === 'ADMIN' ? 'translate-x-[32px]' : 'translate-x-[4px]'
+                            }`}
+                          />
+                        </button>
+                        <span className={`text-sm ${editUserMode === 'ADMIN' ? 'font-semibold' : 'font-normal text-gray-medium'}`}>
+                          Администратор
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Save Button */}
+                    <button
+                      onClick={handleSaveUser}
+                      disabled={isSaving}
+                      className="w-full bg-teal text-white py-3 rounded-[30px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 mt-2"
+                    >
+                      {isSaving ? 'Сохранение...' : 'Сохранить'}
+                    </button>
                   </div>
                 )}
               </div>

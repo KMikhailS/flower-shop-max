@@ -943,6 +943,69 @@ export async function updateUserPhone(
 }
 
 /**
+ * Fetch user by username (ADMIN only)
+ *
+ * @param username - Username to search for
+ * @param initData - Telegram WebApp initData string
+ * @returns Promise<UserInfo> - User information
+ * @throws Error if request fails
+ */
+export async function fetchUserByUsername(
+  username: string,
+  initData: string
+): Promise<UserInfo> {
+  const response = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(username)}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `tma ${initData}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch user by username: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data as UserInfo;
+}
+
+/**
+ * Update user role and mode (ADMIN only)
+ *
+ * @param userId - User ID to update
+ * @param role - New role value ('ADMIN' or 'USER')
+ * @param mode - New mode value ('ADMIN' or 'USER')
+ * @param initData - Telegram WebApp initData string
+ * @returns Promise<UserInfo> - Updated user information
+ * @throws Error if request fails
+ */
+export async function updateUser(
+  userId: number,
+  role: string,
+  mode: string,
+  initData: string
+): Promise<UserInfo> {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `tma ${initData}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ role, mode }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to update user: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data as UserInfo;
+}
+
+/**
  * Fetch all active settings (ADMIN only)
  *
  * @param initData - Telegram WebApp initData string

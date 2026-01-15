@@ -173,6 +173,21 @@ async def get_user(user_id: int) -> Optional[dict]:
         return None
 
 
+async def get_user_by_username(username: str) -> Optional[dict]:
+    """Get user information by username"""
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            "SELECT * FROM user_info WHERE username = ?",
+            (username,)
+        )
+        row = await cursor.fetchone()
+
+        if row:
+            return dict(row)
+        return None
+
+
 async def update_user_mode(user_id: int, mode: str) -> None:
     """Update user mode (ADMIN or USER)"""
     async with aiosqlite.connect(DB_PATH) as db:
@@ -183,6 +198,18 @@ async def update_user_mode(user_id: int, mode: str) -> None:
         )
         await db.commit()
         logger.info(f"Updated mode for user {user_id} to {mode}")
+
+
+async def update_user_role_and_mode(user_id: int, role: str, mode: str) -> None:
+    """Update user role and mode"""
+    async with aiosqlite.connect(DB_PATH) as db:
+        current_time = datetime.now().isoformat()
+        await db.execute(
+            "UPDATE user_info SET role = ?, mode = ?, changestamp = ? WHERE id = ?",
+            (role, mode, current_time, user_id)
+        )
+        await db.commit()
+        logger.info(f"Updated user {user_id}: role={role}, mode={mode}")
 
 
 async def create_good_card(
