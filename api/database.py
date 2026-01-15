@@ -316,6 +316,7 @@ async def update_good_card(
             'price': first_row['price'],
             'non_discount_price': first_row['non_discount_price'],
             'description': first_row['description'],
+            'sort_order': first_row['sort_order'],
             'images': []
         }
 
@@ -376,6 +377,7 @@ async def get_goods_by_status(status: str = 'NEW') -> list[dict]:
                     'price': row['price'],
                     'non_discount_price': row['non_discount_price'],
                     'description': row['description'],
+                    'sort_order': row['sort_order'],
                     'images': []
                 }
 
@@ -421,6 +423,7 @@ async def get_all_goods() -> list[dict]:
                     'price': row['price'],
                     'non_discount_price': row['non_discount_price'],
                     'description': row['description'],
+                    'sort_order': row['sort_order'],
                     'images': []
                 }
 
@@ -502,6 +505,7 @@ async def update_good_status(good_id: int, new_status: str) -> dict:
             'price': first_row['price'],
             'non_discount_price': first_row['non_discount_price'],
             'description': first_row['description'],
+            'sort_order': first_row['sort_order'],
             'images': []
         }
 
@@ -656,6 +660,7 @@ async def update_images_order(good_id: int, image_urls: list[str]) -> dict:
             'price': first_row['price'],
             'non_discount_price': first_row['non_discount_price'],
             'description': first_row['description'],
+            'sort_order': first_row['sort_order'],
             'images': []
         }
 
