@@ -2,8 +2,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from auth import verify_telegram_init_data, verify_admin_mode
-from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest
-from database import get_user, get_user_by_username, update_user_mode, update_user_role_and_mode, add_or_update_user, get_all_settings, upsert_setting, delete_setting
+from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest, SupportChatDTO
+from database import get_user, get_user_by_username, update_user_mode, update_user_role_and_mode, add_or_update_user, get_all_settings, upsert_setting, delete_setting, get_setting_by_type
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,25 @@ async def get_current_user(user_id: int = Depends(verify_telegram_init_data)):
         username=user.get("username"),
         phone=user.get("phone")
     )
+
+
+@router.get("/support-chat-id", response_model=SupportChatDTO)
+async def get_support_chat_id(user_id: int = Depends(verify_telegram_init_data)):
+    """
+    Get support chat id for feedback
+
+    Requires valid Telegram WebApp initData in Authorization header
+    """
+    logger.info(f"Fetching support chat id for user_id={user_id}")
+
+    setting = await get_setting_by_type("SUPPORT_CHAT_ID")
+    if not setting or not setting.get("value"):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Support chat ID not configured"
+        )
+
+    return SupportChatDTO(value=setting["value"])
 
 
 @router.get("/by-username/{username}", response_model=UserInfoDTO)

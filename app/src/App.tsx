@@ -18,7 +18,7 @@ import AdminProductCard from './components/AdminProductCard';
 import AdminPromoBannerCard from './components/AdminPromoBannerCard';
 import { useTelegramWebApp } from './hooks/useTelegramWebApp';
 import { useCartPersistence } from './hooks/useCartPersistence';
-import { fetchUserInfo, UserInfo, createGoodCard, fetchGoods, fetchAllGoods, GoodDTO, addGoodImages, updateGoodCard, deleteGood, blockGood, activateGood, fetchPromoBanners, fetchAllPromoBanners, PromoBannerDTO, createPromoBanner, deletePromoBanner, blockPromoBanner, activatePromoBanner, updatePromoBannerLink } from './api/client';
+import { fetchUserInfo, UserInfo, createGoodCard, fetchGoods, fetchAllGoods, GoodDTO, addGoodImages, updateGoodCard, deleteGood, blockGood, activateGood, fetchPromoBanners, fetchAllPromoBanners, PromoBannerDTO, createPromoBanner, deletePromoBanner, blockPromoBanner, activatePromoBanner, updatePromoBannerLink, fetchSupportChatId } from './api/client';
 
 export interface CartItemData {
   product: Product;
@@ -227,6 +227,48 @@ function App() {
     setIsCartOpen(false);
     setIsStoreAddressesOpen(false);
     setIsSettingsOpen(false);
+  };
+
+  const buildSupportChatLink = (chatId: string) => {
+    const normalized = chatId.trim();
+    if (normalized.startsWith('-100') && normalized.length > 4) {
+      return `https://t.me/c/${normalized.slice(4)}`;
+    }
+    return `tg://user?id=${normalized}`;
+  };
+
+  const handleOpenFeedback = async () => {
+    if (!webApp?.initData) {
+      alert('Ошибка: нет данных авторизации');
+      return;
+    }
+
+    try {
+      const supportChatId = await fetchSupportChatId(webApp.initData);
+      if (!supportChatId) {
+        webApp?.showAlert?.('Чат поддержки не настроен');
+        return;
+      }
+
+      const chatLink = buildSupportChatLink(supportChatId);
+      if (webApp?.openTelegramLink) {
+        webApp.openTelegramLink(chatLink);
+      } else if (webApp?.openLink) {
+        webApp.openLink(chatLink);
+      } else {
+        window.open(chatLink, '_blank');
+      }
+      setIsMenuOpen(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('404')) {
+        webApp?.showAlert?.('Чат поддержки не настроен');
+      } else if (webApp?.showAlert) {
+        webApp.showAlert('Не удалось открыть чат поддержки');
+      } else {
+        alert('Не удалось открыть чат поддержки');
+      }
+    }
   };
 
   const handleCloseMenu = () => {
@@ -793,6 +835,7 @@ function App() {
         onOpenStoreAddresses={() => handleOpenStoreAddresses(false)}
         onOpenDeliveryInfo={handleOpenDeliveryInfo}
         onOpenPaymentInfo={handleOpenPaymentInfo}
+        onOpenFeedback={handleOpenFeedback}
         onOpenSettings={handleOpenSettings}
         onOpenMyOrders={handleOpenMyOrders}
         onOpenAdminOrders={handleOpenAdminOrders}

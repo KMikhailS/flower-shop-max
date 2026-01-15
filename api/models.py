@@ -112,6 +112,11 @@ class SettingRequest(BaseModel):
     value: str
 
 
+class SupportChatDTO(BaseModel):
+    """Data transfer object for support chat id"""
+    value: str
+
+
 class CartItemRequest(BaseModel):
     """Request model for cart items in order creation/update"""
     good_id: int

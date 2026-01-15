@@ -1033,6 +1033,31 @@ export async function fetchSettings(initData: string): Promise<Setting[]> {
 }
 
 /**
+ * Fetch support chat id for feedback
+ *
+ * @param initData - Telegram WebApp initData string
+ * @returns Promise<string> - Support chat id
+ * @throws Error if request fails
+ */
+export async function fetchSupportChatId(initData: string): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/users/support-chat-id`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `tma ${initData}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch support chat id: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  return (data?.value || '') as string;
+}
+
+/**
  * Create or update a setting (ADMIN only)
  *
  * @param type - Setting type (e.g., 'SUPPORT_CHAT_ID', 'MANAGER_CHAT_ID')
