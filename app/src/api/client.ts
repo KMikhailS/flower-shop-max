@@ -1257,6 +1257,9 @@ export interface OrderRequest {
   user_id: number;
   delivery_type: string;
   delivery_address: string;
+  // For courier delivery: separate date and time chosen in UI (combined on backend)
+  delivery_date?: string;
+  delivery_time?: string;
   cart_items: CartItemRequest[];
 }
 
@@ -1274,6 +1277,7 @@ export interface OrderDTO {
   changeuser: number | null;
   delivery_type: string;
   delivery_address: string;
+  delivery_date_time?: string | null;
   cart_items: CartItemDTO[];
 }
 

@@ -205,6 +205,11 @@ const MyOrders: React.FC<MyOrdersProps> = ({
                     <div className="text-black">
                       {order.delivery_address}
                     </div>
+                    {order.delivery_type === 'COURIER' && order.delivery_date_time ? (
+                      <div className="text-black">
+                        Доставка к: {formatDate(order.delivery_date_time)}
+                      </div>
+                    ) : null}
                   </div>
 
                   {/* Order Items */}

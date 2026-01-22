@@ -48,6 +48,15 @@ async def send_order_notification_to_manager(order_data: dict) -> bool:
 
         # Format delivery type
         delivery_type_text = "Самовывоз" if order_data['delivery_type'] == 'PICK_UP' else "Курьером"
+
+        # Format delivery schedule (optional)
+        delivery_schedule_text: Optional[str] = None
+        if order_data.get('delivery_date_time'):
+            try:
+                scheduled_at = datetime.fromisoformat(order_data['delivery_date_time'])
+                delivery_schedule_text = scheduled_at.strftime("%d.%m.%Y %H:%M")
+            except Exception:
+                delivery_schedule_text = str(order_data['delivery_date_time'])
         
         # Calculate total price
         total_price = sum(item['price'] * item['count'] for item in order_data['cart_items'])
@@ -66,6 +75,7 @@ async def send_order_notification_to_manager(order_data: dict) -> bool:
             time_text = "не указано"
         
         # Build notification message
+        schedule_line = f"📅 <b>Доставка к:</b> {delivery_schedule_text}\n" if delivery_schedule_text else ""
         message = (
             f"🆕 <b>НОВЫЙ ЗАКАЗ #{order_data['id']}</b>\n\n"
             f"👤 <b>Клиент:</b>\n"
@@ -75,7 +85,8 @@ async def send_order_notification_to_manager(order_data: dict) -> bool:
             f"{items_text}\n"
             f"💰 <b>Итого: {total_price}₽</b>\n\n"
             f"🚚 <b>Доставка:</b> {delivery_type_text}\n"
-            f"📍 <b>Адрес:</b> {order_data['delivery_address']}\n\n"
+            f"📍 <b>Адрес:</b> {order_data['delivery_address']}\n"
+            f"{schedule_line}\n"
             f"🕐 <b>Время заказа:</b> {time_text}"
         )
         
@@ -163,6 +174,15 @@ async def send_order_notification_to_email(order_data: dict) -> bool:
         # Format delivery type
         delivery_type_text = "Самовывоз" if order_data['delivery_type'] == 'PICK_UP' else "Курьером"
 
+        # Format delivery schedule (optional)
+        delivery_schedule_text: Optional[str] = None
+        if order_data.get('delivery_date_time'):
+            try:
+                scheduled_at = datetime.fromisoformat(order_data['delivery_date_time'])
+                delivery_schedule_text = scheduled_at.strftime("%d.%m.%Y %H:%M")
+            except Exception:
+                delivery_schedule_text = str(order_data['delivery_date_time'])
+
         # Calculate total price
         total_price = sum(item['price'] * item['count'] for item in order_data['cart_items'])
 
@@ -182,6 +202,7 @@ async def send_order_notification_to_email(order_data: dict) -> bool:
         # Build email subject and body
         subject = f"Новый заказ #{order_data['id']} - FanFanTulpan"
 
+        schedule_line = f"\nДОСТАВКА К: {delivery_schedule_text}" if delivery_schedule_text else ""
         body = f"""
 НОВЫЙ ЗАКАЗ #{order_data['id']}
 
@@ -195,6 +216,7 @@ Username: {'@' + username if username != 'не указан' else 'не указ
 
 ДОСТАВКА: {delivery_type_text}
 АДРЕС: {order_data['delivery_address']}
+{schedule_line}
 
 ВРЕМЯ ЗАКАЗА: {time_text}
 """

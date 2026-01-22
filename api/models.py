@@ -153,6 +153,9 @@ class OrderRequest(BaseModel):
     user_id: int
     delivery_type: str
     delivery_address: str
+    # For courier delivery: separate date and time inputs from frontend (combined on backend)
+    delivery_date: Optional[str] = None
+    delivery_time: Optional[str] = None
     cart_items: list[CartItemRequest]
 
 
@@ -168,6 +171,7 @@ class OrderDTO(BaseModel):
     changeuser: Optional[int] = None
     delivery_type: str
     delivery_address: str
+    delivery_date_time: Optional[str] = None
     cart_items: list[CartItemDTO]
 
 

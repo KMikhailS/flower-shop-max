@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 
 from dependencies import verify_admin_mode
@@ -40,12 +41,37 @@ async def create_order_endpoint(
             for item in order.cart_items
         ]
 
+        # Combine delivery date + time into one field for DB
+        delivery_date_time = None
+        if order.delivery_type == "COURIER":
+            if not order.delivery_date or not order.delivery_time:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Для доставки курьером выберите дату и время доставки"
+                )
+
+            date_part = order.delivery_date.strip()
+            time_part = order.delivery_time.strip()
+            # HTML time input typically returns HH:MM; normalize to HH:MM:SS for ISO parsing
+            if len(time_part) == 5:
+                time_part = f"{time_part}:00"
+
+            delivery_date_time = f"{date_part}T{time_part}"
+            try:
+                datetime.fromisoformat(delivery_date_time)
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Некорректный формат даты/времени доставки"
+                )
+
         # Create order in database
         created_order = await create_order(
             status=order.status,
             user_id=order.user_id,
             delivery_type=order.delivery_type,
             delivery_address=order.delivery_address,
+            delivery_date_time=delivery_date_time,
             cart_items=cart_items_dict,
             createuser=user_id
         )
@@ -86,8 +112,11 @@ async def create_order_endpoint(
             changeuser=created_order.get("changeuser"),
             delivery_type=created_order["delivery_type"],
             delivery_address=created_order["delivery_address"],
+            delivery_date_time=created_order.get("delivery_date_time"),
             cart_items=[CartItemDTO(**item) for item in created_order["cart_items"]]
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to create order: {str(e)}")
         raise HTTPException(
@@ -143,6 +172,7 @@ async def update_order_endpoint(
             changeuser=updated_order.get("changeuser"),
             delivery_type=updated_order["delivery_type"],
             delivery_address=updated_order["delivery_address"],
+            delivery_date_time=updated_order.get("delivery_date_time"),
             cart_items=[CartItemDTO(**item) for item in updated_order["cart_items"]]
         )
     except ValueError as e:
@@ -197,6 +227,7 @@ async def get_my_orders_endpoint(
                 changeuser=order.get("changeuser"),
                 delivery_type=order["delivery_type"],
                 delivery_address=order["delivery_address"],
+                delivery_date_time=order.get("delivery_date_time"),
                 cart_items=[CartItemDTO(**item) for item in order["cart_items"]]
             )
             for order in orders
@@ -240,6 +271,7 @@ async def get_order_endpoint(
             changeuser=order.get("changeuser"),
             delivery_type=order["delivery_type"],
             delivery_address=order["delivery_address"],
+            delivery_date_time=order.get("delivery_date_time"),
             cart_items=[CartItemDTO(**item) for item in order["cart_items"]]
         )
     except ValueError as e:
@@ -313,6 +345,7 @@ async def get_orders_endpoint(
                 changeuser=order.get("changeuser"),
                 delivery_type=order["delivery_type"],
                 delivery_address=order["delivery_address"],
+                delivery_date_time=order.get("delivery_date_time"),
                 cart_items=[CartItemDTO(**item) for item in order["cart_items"]]
             ))
 
