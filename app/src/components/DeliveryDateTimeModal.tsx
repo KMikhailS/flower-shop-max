@@ -85,6 +85,12 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
 
     const initial = initialDate ? parseYMD(initialDate) : null;
     setVisibleMonth(initial || today);
+
+    // Reset drag state on each open (component isn't unmounted when isOpen=false)
+    setDragY(0);
+    setIsDragging(false);
+    pointerIdRef.current = null;
+    dragStartYRef.current = null;
   }, [isOpen, initialDate, initialTime, today]);
 
   // Prevent Telegram mini app from being closed by vertical swipe while bottom sheet is open
