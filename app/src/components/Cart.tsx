@@ -56,6 +56,26 @@ const Cart: React.FC<CartProps> = ({
     return `${yyyy}-${mm}-${dd}`;
   }, []);
 
+  const deliveryTimeOptions = React.useMemo(() => {
+    // Use a simple, WebView-safe time picker (Telegram WebView can break input[type="time"])
+    // Generate times from 09:00 to 21:00 with 30-min steps.
+    const startHour = 9;
+    const endHour = 21;
+    const stepMinutes = 30;
+    const options: string[] = [];
+
+    for (let hour = startHour; hour <= endHour; hour++) {
+      for (let minute = 0; minute < 60; minute += stepMinutes) {
+        if (hour === endHour && minute > 0) continue;
+        const hh = String(hour).padStart(2, '0');
+        const mm = String(minute).padStart(2, '0');
+        options.push(`${hh}:${mm}`);
+      }
+    }
+
+    return options;
+  }, []);
+
   // Fetch address suggestions when debounced address changes
   React.useEffect(() => {
     if (deliveryMethod !== 'delivery' || debouncedAddress.length < 3) {
@@ -446,12 +466,20 @@ const Cart: React.FC<CartProps> = ({
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Время доставки</label>
-                <input
-                  type="time"
+                <select
                   value={deliveryTime}
                   onChange={(e) => setDeliveryTime(e.target.value)}
                   className="w-full h-[53px] px-4 rounded-[15px] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.25)] text-base font-semibold leading-[1.174] text-black bg-white"
-                />
+                >
+                  <option value="" disabled>
+                    Выберите время
+                  </option>
+                  {deliveryTimeOptions.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
