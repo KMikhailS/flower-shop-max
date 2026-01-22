@@ -29,6 +29,12 @@ function addDays(d: Date, days: number): Date {
   return x;
 }
 
+function addMonths(d: Date, months: number): Date {
+  const x = new Date(d);
+  x.setMonth(x.getMonth() + months);
+  return x;
+}
+
 function parseYMD(ymd: string): Date | null {
   // Expect YYYY-MM-DD
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
@@ -59,36 +65,41 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
   onApply
 }) => {
   const today = useMemo(() => startOfDay(new Date()), []);
-  const maxDate = useMemo(() => addDays(today, 30), [today]); // next 30 days
+  const maxDate = useMemo(() => startOfDay(addMonths(today, 3)), [today]); // next 3 months
 
   const [draftDate, setDraftDate] = useState<string>(initialDate || '');
-  const [draftTime, setDraftTime] = useState<string>(initialTime || '');
+  const [draftHour, setDraftHour] = useState<string>('');
+  const [draftMinute, setDraftMinute] = useState<string>('');
   const [visibleMonth, setVisibleMonth] = useState<Date>(today);
 
   useEffect(() => {
     if (!isOpen) return;
     setDraftDate(initialDate || '');
-    setDraftTime(initialTime || '');
+    const m = initialTime ? /^(\d{2}):(\d{2})$/.exec(initialTime) : null;
+    setDraftHour(m ? m[1] : '');
+    setDraftMinute(m ? m[2] : '');
 
     const initial = initialDate ? parseYMD(initialDate) : null;
     setVisibleMonth(initial || today);
   }, [isOpen, initialDate, initialTime, today]);
 
-  const timeSlots = useMemo(() => {
-    const startHour = 9;
-    const endHour = 21;
-    const stepMinutes = 30;
-    const slots: string[] = [];
-    for (let hour = startHour; hour <= endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += stepMinutes) {
-        if (hour === endHour && minute > 0) continue;
-        const hh = String(hour).padStart(2, '0');
-        const mm = String(minute).padStart(2, '0');
-        slots.push(`${hh}:${mm}`);
-      }
+  const hourOptions = useMemo(() => {
+    const options: string[] = [];
+    for (let h = 0; h <= 23; h++) {
+      options.push(String(h).padStart(2, '0'));
     }
-    return slots;
+    return options;
   }, []);
+
+  const minuteOptions = useMemo(() => {
+    const options: string[] = [];
+    for (let m = 0; m <= 59; m++) {
+      options.push(String(m).padStart(2, '0'));
+    }
+    return options;
+  }, []);
+
+  const draftTime = draftHour && draftMinute ? `${draftHour}:${draftMinute}` : '';
 
   const calendarCells = useMemo(() => {
     const year = visibleMonth.getFullYear();
@@ -156,8 +167,8 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
       />
 
       {/* Bottom sheet */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[24px] shadow-[0px_-6px_16px_rgba(0,0,0,0.15)]">
-        <div className="px-6 pt-3 pb-4">
+      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[24px] shadow-[0px_-6px_16px_rgba(0,0,0,0.15)] max-h-[92vh] overflow-hidden">
+        <div className="px-6 pt-6 pb-4 overflow-y-auto max-h-[92vh]">
           <div className="flex justify-center">
             <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
           </div>
@@ -265,23 +276,41 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
           {/* Time */}
           <div className="mt-5">
             <div className="text-sm font-semibold text-black mb-2">Время доставки</div>
-            <div className="grid grid-cols-4 gap-2 max-h-[160px] overflow-y-auto pr-1">
-              {timeSlots.map((t) => {
-                const isSelected = draftTime === t;
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setDraftTime(t)}
-                    className={[
-                      'py-2 rounded-[14px] text-xs font-semibold transition-colors',
-                      isSelected ? 'bg-teal text-white' : 'bg-gray-light text-black hover:opacity-80'
-                    ].join(' ')}
-                  >
-                    {t}
-                  </button>
-                );
-              })}
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="block text-xs text-gray-500 mb-1">Часы</label>
+                <select
+                  value={draftHour}
+                  onChange={(e) => setDraftHour(e.target.value)}
+                  className="w-full h-[50px] px-4 rounded-[14px] bg-gray-light text-base font-semibold text-black"
+                >
+                  <option value="" disabled>
+                    00
+                  </option>
+                  {hourOptions.map((h) => (
+                    <option key={h} value={h}>
+                      {h}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs text-gray-500 mb-1">Минуты</label>
+                <select
+                  value={draftMinute}
+                  onChange={(e) => setDraftMinute(e.target.value)}
+                  className="w-full h-[50px] px-4 rounded-[14px] bg-gray-light text-base font-semibold text-black"
+                >
+                  <option value="" disabled>
+                    00
+                  </option>
+                  {minuteOptions.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
