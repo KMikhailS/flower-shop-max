@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from auth import verify_telegram_init_data, verify_admin_mode
-from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest, SupportChatDTO, PaymentInfoTextDTO, DeliveryInfoTextDTO
+from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest, SupportChatDTO, PaymentInfoTextDTO, DeliveryInfoTextDTO, DeliveryAmountDTO
 from database import get_user, get_user_by_username, update_user_mode, update_user_role_and_mode, add_or_update_user, get_all_settings, upsert_setting, delete_setting, get_setting_by_type
 
 logger = logging.getLogger(__name__)
@@ -91,6 +91,23 @@ async def get_delivery_info_text(user_id: int = Depends(verify_telegram_init_dat
         value = setting["value"]
 
     return DeliveryInfoTextDTO(value=value)
+
+
+@router.get("/delivery-amount", response_model=DeliveryAmountDTO)
+async def get_delivery_amount(user_id: int = Depends(verify_telegram_init_data)):
+    """
+    Get delivery amount for cart calculations
+
+    Requires valid Telegram WebApp initData in Authorization header
+    """
+    logger.info(f"Fetching delivery amount for user_id={user_id}")
+
+    setting = await get_setting_by_type("DELIVERY_AMOUNT")
+    value = "0"
+    if setting and setting.get("value"):
+        value = setting["value"]
+
+    return DeliveryAmountDTO(value=value)
 
 
 @router.get("/by-username/{username}", response_model=UserInfoDTO)

@@ -1108,6 +1108,31 @@ export async function fetchDeliveryInfoText(initData: string): Promise<string> {
 }
 
 /**
+ * Fetch delivery amount for cart calculations
+ *
+ * @param initData - Telegram WebApp initData string
+ * @returns Promise<string> - Delivery amount (string number)
+ * @throws Error if request fails
+ */
+export async function fetchDeliveryAmount(initData: string): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/users/delivery-amount`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `tma ${initData}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch delivery amount: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  return (data?.value || '0') as string;
+}
+
+/**
  * Create or update a setting (ADMIN only)
  *
  * @param type - Setting type (e.g., 'SUPPORT_CHAT_ID', 'MANAGER_CHAT_ID')

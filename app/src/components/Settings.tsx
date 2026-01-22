@@ -33,7 +33,7 @@ const Settings: React.FC<SettingsProps> = ({
   onModeChange
 }) => {
   const [currentMode, setCurrentMode] = useState<string>(userMode || 'USER');
-  const [activeTab, setActiveTab] = useState<'notifications' | 'categories' | 'users'>('notifications');
+  const [activeTab, setActiveTab] = useState<'notifications' | 'delivery' | 'categories' | 'users'>('notifications');
 
   // Notification settings state
   const [supportChatId, setSupportChatId] = useState<string>('');
@@ -43,6 +43,9 @@ const Settings: React.FC<SettingsProps> = ({
   const [orderEmailPassword, setOrderEmailPassword] = useState<string>('');
   const [smtpHost, setSmtpHost] = useState<string>('');
   const [smtpPort, setSmtpPort] = useState<string>('');
+
+  // Delivery settings state
+  const [deliveryAmount, setDeliveryAmount] = useState<string>('');
 
   // Categories state
   const [categories, setCategories] = useState<CategoryDTO[]>([]);
@@ -107,6 +110,7 @@ const Settings: React.FC<SettingsProps> = ({
       const orderEmailPasswordSetting = settings.find((s: Setting) => s.type === 'ORDER_EMAIL_PASSWORD');
       const smtpHostSetting = settings.find((s: Setting) => s.type === 'SMTP_HOST');
       const smtpPortSetting = settings.find((s: Setting) => s.type === 'SMTP_PORT');
+      const deliveryAmountSetting = settings.find((s: Setting) => s.type === 'DELIVERY_AMOUNT');
 
       setSupportChatId(supportSetting?.value || '');
       setManagerChatId(managerSetting?.value || '');
@@ -115,6 +119,7 @@ const Settings: React.FC<SettingsProps> = ({
       setOrderEmailPassword(orderEmailPasswordSetting?.value || '');
       setSmtpHost(smtpHostSetting?.value || '');
       setSmtpPort(smtpPortSetting?.value || '');
+      setDeliveryAmount(deliveryAmountSetting?.value || '');
     } catch (err) {
       console.error('Failed to load settings:', err);
       setError('Не удалось загрузить настройки');
@@ -301,6 +306,17 @@ const Settings: React.FC<SettingsProps> = ({
         await upsertSetting('SMTP_PORT', smtpPort.trim(), initData);
       }
 
+      // Save delivery amount if provided
+      if (deliveryAmount.trim()) {
+        // Validate: digits only (рубли)
+        if (!/^\d+$/.test(deliveryAmount.trim())) {
+          setError('Стоимость доставки должна быть числом');
+          setIsSaving(false);
+          return;
+        }
+        await upsertSetting('DELIVERY_AMOUNT', deliveryAmount.trim(), initData);
+      }
+
       // Success - close settings
       alert('Настройки успешно сохранены!');
       onClose();
@@ -385,6 +401,16 @@ const Settings: React.FC<SettingsProps> = ({
                 }`}
               >
                 Уведомления
+              </button>
+              <button
+                onClick={() => setActiveTab('delivery')}
+                className={`flex-1 py-2 px-3 rounded-[20px] text-sm font-medium transition-colors ${
+                  activeTab === 'delivery'
+                    ? 'bg-teal text-white'
+                    : 'bg-gray-200 text-gray-600'
+                }`}
+              >
+                Доставка
               </button>
               <button
                 onClick={() => setActiveTab('categories')}
@@ -513,6 +539,34 @@ const Settings: React.FC<SettingsProps> = ({
                 </div>
 
                 {/* Save Button */}
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="w-full bg-teal text-white py-3 rounded-[30px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 mt-4"
+                >
+                  {isSaving ? 'Сохранение...' : 'Сохранить'}
+                </button>
+              </>
+            )}
+
+            {/* Delivery Tab */}
+            {activeTab === 'delivery' && (
+              <>
+                <div className="flex flex-col gap-3">
+                  <label className="text-base font-semibold text-black">
+                    Стоимость доставки
+                  </label>
+                  <input
+                    type="text"
+                    value={deliveryAmount}
+                    onChange={(e) => setDeliveryAmount(e.target.value)}
+                    disabled={isSaving}
+                    inputMode="numeric"
+                    placeholder="0"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-[20px] focus:outline-none focus:border-teal disabled:opacity-50"
+                  />
+                </div>
+
                 <button
                   onClick={handleSave}
                   disabled={isSaving}

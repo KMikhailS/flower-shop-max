@@ -5,7 +5,7 @@ import { useTelegramWebApp } from '../hooks/useTelegramWebApp';
 import { CartItemData } from '../App';
 import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 import { useDebounce } from '../hooks/useDebounce';
-import { createOrder, OrderRequest, fetchUserInfo, suggestAddress, AddressSuggestion } from '../api/client';
+import { createOrder, OrderRequest, fetchUserInfo, suggestAddress, AddressSuggestion, fetchDeliveryAmount } from '../api/client';
 
 interface CartProps {
   cartItems: CartItemData[];
@@ -40,6 +40,7 @@ const Cart: React.FC<CartProps> = ({
   const [suggestions, setSuggestions] = React.useState<AddressSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = React.useState(false);
+  const [deliveryAmount, setDeliveryAmount] = React.useState<number>(0);
 
   const debouncedAddress = useDebounce(customAddress, 300);
 
@@ -68,11 +69,30 @@ const Cart: React.FC<CartProps> = ({
     fetchSuggestions();
   }, [debouncedAddress, deliveryMethod]);
 
+  // Fetch delivery amount for courier delivery
+  React.useEffect(() => {
+    const initData = webApp?.initData || '';
+    if (!initData) return;
+
+    fetchDeliveryAmount(initData)
+      .then((value) => {
+        const parsed = parseFloat(String(value).replace(/[^\d]/g, '')) || 0;
+        setDeliveryAmount(parsed);
+      })
+      .catch((error) => {
+        console.error('Failed to fetch delivery amount:', error);
+        setDeliveryAmount(0);
+      });
+  }, [webApp?.initData]);
+
   // Рассчитываем общую сумму всех товаров
   const totalPrice = cartItems.reduce((sum, item) => {
     const basePrice = parseFloat(item.product.price.replace(/[^\d]/g, ''));
     return sum + (basePrice * item.quantity);
   }, 0);
+
+  const deliveryCost = deliveryMethod === 'delivery' && cartItems.length > 0 ? deliveryAmount : 0;
+  const totalPriceWithDelivery = totalPrice + deliveryCost;
 
   const handleDecrease = (productId: number) => {
     onDecreaseQuantity(productId);
@@ -216,7 +236,7 @@ const Cart: React.FC<CartProps> = ({
           price: parseFloat(item.product.price.replace(/[^\d]/g, '')),
           quantity: item.quantity,
         })),
-        totalPrice,
+          totalPrice: totalPriceWithDelivery,
         deliveryMethod: deliveryMethod === 'pickup' ? 'Самовывоз' : 'Курьером',
         address: delivery_address,
         timestamp: new Date().toISOString(),
@@ -277,10 +297,16 @@ const Cart: React.FC<CartProps> = ({
                 />
               );
             })}
+            {deliveryMethod === 'delivery' && (
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-base font-semibold text-black">Стоимость доставки</span>
+                <span className="text-base font-semibold text-black">{deliveryAmount} руб.</span>
+              </div>
+            )}
             {/* Total Price */}
             <div className="flex justify-between items-center mb-6">
               <span className="text-base font-bold text-black">Итого:</span>
-              <span className="text-base font-bold text-black">{totalPrice} руб.</span>
+              <span className="text-base font-bold text-black">{totalPriceWithDelivery} руб.</span>
             </div>
           </>
         )}

@@ -127,6 +127,11 @@ class DeliveryInfoTextDTO(BaseModel):
     value: str
 
 
+class DeliveryAmountDTO(BaseModel):
+    """Data transfer object for delivery amount"""
+    value: str
+
+
 class CartItemRequest(BaseModel):
     """Request model for cart items in order creation/update"""
     good_id: int
