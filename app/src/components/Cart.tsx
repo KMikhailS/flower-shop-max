@@ -6,6 +6,7 @@ import { CartItemData } from '../App';
 import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 import { useDebounce } from '../hooks/useDebounce';
 import { createOrder, OrderRequest, fetchUserInfo, suggestAddress, AddressSuggestion, fetchDeliveryAmount } from '../api/client';
+import DeliveryDateTimeModal from './DeliveryDateTimeModal';
 
 interface CartProps {
   cartItems: CartItemData[];
@@ -43,38 +44,17 @@ const Cart: React.FC<CartProps> = ({
   const [deliveryAmount, setDeliveryAmount] = React.useState<number>(0);
   const [deliveryDate, setDeliveryDate] = React.useState<string>('');
   const [deliveryTime, setDeliveryTime] = React.useState<string>('');
+  const [isDeliveryDateTimeOpen, setIsDeliveryDateTimeOpen] = React.useState(false);
 
   const debouncedAddress = useDebounce(customAddress, 300);
 
   useLockBodyScroll(true);
 
-  const minDeliveryDate = React.useMemo(() => {
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }, []);
-
-  const deliveryTimeOptions = React.useMemo(() => {
-    // Use a simple, WebView-safe time picker (Telegram WebView can break input[type="time"])
-    // Generate times from 09:00 to 21:00 with 30-min steps.
-    const startHour = 9;
-    const endHour = 21;
-    const stepMinutes = 30;
-    const options: string[] = [];
-
-    for (let hour = startHour; hour <= endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += stepMinutes) {
-        if (hour === endHour && minute > 0) continue;
-        const hh = String(hour).padStart(2, '0');
-        const mm = String(minute).padStart(2, '0');
-        options.push(`${hh}:${mm}`);
-      }
-    }
-
-    return options;
-  }, []);
+  const formatDeliveryDate = (ymd: string) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+    if (!m) return ymd;
+    return `${m[3]}.${m[2]}.${m[1]}`;
+  };
 
   // Fetch address suggestions when debounced address changes
   React.useEffect(() => {
@@ -453,37 +433,39 @@ const Cart: React.FC<CartProps> = ({
             </div>
 
             {/* Delivery date/time (courier only) */}
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Дата доставки</label>
-                <input
-                  type="date"
-                  value={deliveryDate}
-                  min={minDeliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                  className="w-full h-[53px] px-4 rounded-[15px] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.25)] text-base font-semibold leading-[1.174] text-black bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Время доставки</label>
-                <select
-                  value={deliveryTime}
-                  onChange={(e) => setDeliveryTime(e.target.value)}
-                  className="w-full h-[53px] px-4 rounded-[15px] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.25)] text-base font-semibold leading-[1.174] text-black bg-white"
-                >
-                  <option value="" disabled>
-                    Выберите время
-                  </option>
-                  {deliveryTimeOptions.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDeliveryDateTimeOpen(true);
+                  webApp?.HapticFeedback.selectionChanged();
+                }}
+                className="w-full px-4 py-4 rounded-[15px] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.25)] bg-white flex items-center justify-between"
+              >
+                <div className="text-left">
+                  <div className="text-xs text-gray-500">Дата и время доставки</div>
+                  <div className="text-base font-semibold text-black mt-1">
+                    {deliveryDate && deliveryTime
+                      ? `${formatDeliveryDate(deliveryDate)} ${deliveryTime}`
+                      : 'Выбрать'}
+                  </div>
+                </div>
+                <div className="text-black opacity-60 text-xl leading-none">›</div>
+              </button>
             </div>
           </div>
         )}
+
+        <DeliveryDateTimeModal
+          isOpen={isDeliveryDateTimeOpen}
+          onClose={() => setIsDeliveryDateTimeOpen(false)}
+          initialDate={deliveryDate}
+          initialTime={deliveryTime}
+          onApply={(date, time) => {
+            setDeliveryDate(date);
+            setDeliveryTime(time);
+          }}
+        />
 
         {/* Buy Button */}
         <button
