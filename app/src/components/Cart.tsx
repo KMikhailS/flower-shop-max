@@ -426,18 +426,23 @@ const Cart: React.FC<CartProps> = ({
         ) : (
           <div className="mb-8">
             <div className="relative">
-              <input
-                type="text"
-                value={customAddress}
-                onChange={(e) => setCustomAddress(e.target.value)}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => {
-                  // Delay to allow click on suggestion
-                  setTimeout(() => setShowSuggestions(false), 200);
-                }}
-                placeholder="Введите адрес доставки"
-                className="w-full h-[53px] px-4 rounded-[15px] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.25)] text-base font-semibold leading-[1.174] text-black bg-white"
-              />
+              <div className="w-full px-4 py-4 rounded-[15px] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.25)] bg-white">
+                <label className="block">
+                  <div className="text-xs text-gray-500">Адрес доставки</div>
+                  <input
+                    type="text"
+                    value={customAddress}
+                    onChange={(e) => setCustomAddress(e.target.value)}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => {
+                      // Delay to allow click on suggestion
+                      setTimeout(() => setShowSuggestions(false), 200);
+                    }}
+                    placeholder="Введите адрес доставки"
+                    className="w-full mt-1 text-base font-semibold leading-[1.174] text-black bg-transparent outline-none"
+                  />
+                </label>
+              </div>
               {/* Address suggestions dropdown */}
               {showSuggestions && suggestions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-[15px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.15)] z-10 max-h-[200px] overflow-y-auto">

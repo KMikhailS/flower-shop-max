@@ -1135,13 +1135,44 @@ async def update_setting(setting_type: str, value: str, user_id: int) -> dict:
 
 
 async def upsert_setting(setting_type: str, value: str, user_id: int) -> dict:
-    """Create or update setting (upsert operation)"""
-    existing = await get_setting_by_type(setting_type)
+    """
+    Create or update setting (upsert operation).
 
-    if existing:
-        return await update_setting(setting_type, value, user_id)
-    else:
-        return await create_setting(setting_type, value, user_id)
+    IMPORTANT:
+    - `settings.type` is UNIQUE.
+    - We use soft-delete (`status = 'DELETED'`), so a deleted row still occupies the UNIQUE key.
+    Therefore, "upsert" must restore/update an existing row (even if DELETED) instead of inserting a new one.
+    """
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        current_time = datetime.now().isoformat()
+
+        await db.execute(
+            """INSERT INTO settings (type, value, createstamp, changestamp, createuser, changeuser, status)
+               VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE')
+               ON CONFLICT(type) DO UPDATE SET
+                 value = excluded.value,
+                 changestamp = excluded.changestamp,
+                 changeuser = excluded.changeuser,
+                 status = 'ACTIVE'""",
+            (setting_type, value, current_time, current_time, user_id, user_id)
+        )
+        await db.commit()
+
+        # Return the active setting
+        cursor = await db.execute(
+            "SELECT * FROM settings WHERE type = ? AND status = 'ACTIVE'",
+            (setting_type,)
+        )
+        row = await cursor.fetchone()
+
+        if not row:
+            logger.error(f"Setting with type={setting_type} not found after upsert")
+            raise ValueError(f"Setting with type={setting_type} not found after upsert")
+
+        result = dict(row)
+        logger.info(f"Upserted setting with type={setting_type}")
+        return result
 
 
 async def delete_setting(setting_type: str) -> None:
