@@ -147,7 +147,7 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
 
   const minuteOptions = useMemo(() => {
     const options: string[] = [];
-    for (let m = 5; m <= 55; m += 5) {
+    for (let m = 0; m <= 55; m += 5) {
       options.push(String(m).padStart(2, '0'));
     }
     return options;
