@@ -369,7 +369,7 @@ const Cart: React.FC<CartProps> = ({
         {/* Delivery Method */}
         <div className="mb-6">
           <h3 className="text-base font-bold leading-[1.174] text-black mb-4">
-            Способ получение
+            Способ получения
           </h3>
           <div className="relative h-10 bg-[#D9D9D9] rounded-[10px] overflow-hidden">
             <div
