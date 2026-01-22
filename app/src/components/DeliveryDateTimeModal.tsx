@@ -156,6 +156,13 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
     dragStartYRef.current = null;
 
     if (shouldClose) {
+      // Prevent "double tap to open" issues after swipe-close (e.g. focused input/keyboard)
+      try {
+        const active = document.activeElement;
+        if (active && active instanceof HTMLElement) active.blur();
+      } catch {
+        // ignore
+      }
       onClose();
       return;
     }

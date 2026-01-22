@@ -56,6 +56,20 @@ const Cart: React.FC<CartProps> = ({
     return `${m[3]}.${m[2]}.${m[1]}`;
   };
 
+  const openDeliveryDateTimeModal = (e?: React.SyntheticEvent) => {
+    // Use pointerdown to avoid cases where the first tap is swallowed by WebView/keyboard after a swipe.
+    e?.preventDefault();
+    if (isDeliveryDateTimeOpen) return;
+    try {
+      const active = document.activeElement;
+      if (active && active instanceof HTMLElement) active.blur();
+    } catch {
+      // ignore
+    }
+    setIsDeliveryDateTimeOpen(true);
+    webApp?.HapticFeedback.selectionChanged();
+  };
+
   // Fetch address suggestions when debounced address changes
   React.useEffect(() => {
     if (deliveryMethod !== 'delivery' || debouncedAddress.length < 3) {
@@ -436,10 +450,8 @@ const Cart: React.FC<CartProps> = ({
             <div className="mt-4">
               <button
                 type="button"
-                onClick={() => {
-                  setIsDeliveryDateTimeOpen(true);
-                  webApp?.HapticFeedback.selectionChanged();
-                }}
+                onPointerDown={openDeliveryDateTimeModal}
+                onClick={openDeliveryDateTimeModal}
                 className="w-full px-4 py-4 rounded-[15px] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.25)] bg-white flex items-center justify-between"
               >
                 <div className="text-left">
