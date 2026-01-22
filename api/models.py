@@ -117,6 +117,11 @@ class SupportChatDTO(BaseModel):
     value: str
 
 
+class PaymentInfoTextDTO(BaseModel):
+    """Data transfer object for payment info text"""
+    value: str
+
+
 class CartItemRequest(BaseModel):
     """Request model for cart items in order creation/update"""
     good_id: int

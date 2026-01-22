@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from auth import verify_telegram_init_data, verify_admin_mode
-from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest, SupportChatDTO
+from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest, SupportChatDTO, PaymentInfoTextDTO
 from database import get_user, get_user_by_username, update_user_mode, update_user_role_and_mode, add_or_update_user, get_all_settings, upsert_setting, delete_setting, get_setting_by_type
 
 logger = logging.getLogger(__name__)
@@ -57,6 +57,23 @@ async def get_support_chat_id(user_id: int = Depends(verify_telegram_init_data))
         )
 
     return SupportChatDTO(value=setting["value"])
+
+
+@router.get("/payment-info-text", response_model=PaymentInfoTextDTO)
+async def get_payment_info_text(user_id: int = Depends(verify_telegram_init_data)):
+    """
+    Get payment info text for PaymentInfo screen
+
+    Requires valid Telegram WebApp initData in Authorization header
+    """
+    logger.info(f"Fetching payment info text for user_id={user_id}")
+
+    setting = await get_setting_by_type("PAYMENT_INFO_TEXT")
+    value = ""
+    if setting and setting.get("value"):
+        value = setting["value"]
+
+    return PaymentInfoTextDTO(value=value)
 
 
 @router.get("/by-username/{username}", response_model=UserInfoDTO)

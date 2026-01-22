@@ -897,6 +897,8 @@ function App() {
       <PaymentInfo
         isOpen={isPaymentInfoOpen}
         onClose={handleClosePaymentInfo}
+        initData={webApp?.initData}
+        userRole={userInfo?.role}
       />
       <StoreAddresses
         isOpen={isStoreAddressesOpen}
