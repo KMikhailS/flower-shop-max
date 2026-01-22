@@ -27,7 +27,6 @@ interface SettingsProps {
 
 const Settings: React.FC<SettingsProps> = ({
   isOpen,
-  onClose,
   onMenuClick,
   userMode,
   initData,
