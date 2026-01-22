@@ -94,6 +94,9 @@ interface TelegramWebApp {
   onEvent(eventType: string, callback: () => void): void;
   offEvent(eventType: string, callback: () => void): void;
   requestContact(callback?: (result: boolean) => void): void;
+  // Disable/enable Telegram's vertical swipe gestures (prevents swipe-down closing the whole mini app)
+  disableVerticalSwipes?(): void;
+  enableVerticalSwipes?(): void;
 }
 
 interface Window {

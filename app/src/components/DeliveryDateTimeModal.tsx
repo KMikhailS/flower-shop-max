@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 type Props = {
   isOpen: boolean;
@@ -71,6 +71,10 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
   const [draftHour, setDraftHour] = useState<string>('');
   const [draftMinute, setDraftMinute] = useState<string>('');
   const [visibleMonth, setVisibleMonth] = useState<Date>(today);
+  const [dragY, setDragY] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartYRef = useRef<number | null>(null);
+  const pointerIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -82,6 +86,16 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
     const initial = initialDate ? parseYMD(initialDate) : null;
     setVisibleMonth(initial || today);
   }, [isOpen, initialDate, initialTime, today]);
+
+  // Prevent Telegram mini app from being closed by vertical swipe while bottom sheet is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const tg = window.Telegram?.WebApp;
+    tg?.disableVerticalSwipes?.();
+    return () => {
+      tg?.enableVerticalSwipes?.();
+    };
+  }, [isOpen]);
 
   const hourOptions = useMemo(() => {
     const options: string[] = [];
@@ -100,6 +114,47 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
   }, []);
 
   const draftTime = draftHour && draftMinute ? `${draftHour}:${draftMinute}` : '';
+
+  const handleDragStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Only start drag on primary button for mouse
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    pointerIdRef.current = e.pointerId;
+    dragStartYRef.current = e.clientY;
+    setIsDragging(true);
+    setDragY(0);
+
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    if (pointerIdRef.current !== e.pointerId) return;
+    if (dragStartYRef.current === null) return;
+
+    const delta = e.clientY - dragStartYRef.current;
+    const clamped = Math.max(0, Math.min(delta, 700));
+    setDragY(clamped);
+  };
+
+  const handleDragEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (pointerIdRef.current !== e.pointerId) return;
+
+    const shouldClose = dragY >= 120;
+    setIsDragging(false);
+    pointerIdRef.current = null;
+    dragStartYRef.current = null;
+
+    if (shouldClose) {
+      onClose();
+      return;
+    }
+    setDragY(0);
+  };
 
   const calendarCells = useMemo(() => {
     const year = visibleMonth.getFullYear();
@@ -156,6 +211,11 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
 
   if (!isOpen) return null;
 
+  const sheetStyle: React.CSSProperties = {
+    transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
+    transition: isDragging ? 'none' : 'transform 200ms ease-out'
+  };
+
   return (
     <div className="fixed inset-0 z-[70] max-w-[402px] mx-auto">
       {/* Backdrop */}
@@ -167,9 +227,19 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
       />
 
       {/* Bottom sheet */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[24px] shadow-[0px_-6px_16px_rgba(0,0,0,0.15)] max-h-[92vh] overflow-hidden">
+      <div
+        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[24px] shadow-[0px_-6px_16px_rgba(0,0,0,0.15)] max-h-[92vh] overflow-hidden"
+        style={sheetStyle}
+      >
         <div className="px-6 pt-6 pb-4 overflow-y-auto max-h-[92vh]">
-          <div className="flex justify-center">
+          <div
+            className="flex justify-center select-none py-2"
+            style={{ touchAction: 'none' }}
+            onPointerDown={handleDragStart}
+            onPointerMove={handleDragMove}
+            onPointerUp={handleDragEnd}
+            onPointerCancel={handleDragEnd}
+          >
             <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
           </div>
 
