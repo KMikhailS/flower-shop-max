@@ -1083,6 +1083,31 @@ export async function fetchPaymentInfoText(initData: string): Promise<string> {
 }
 
 /**
+ * Fetch delivery info text for DeliveryInfo screen
+ *
+ * @param initData - Telegram WebApp initData string
+ * @returns Promise<string> - Delivery info text
+ * @throws Error if request fails
+ */
+export async function fetchDeliveryInfoText(initData: string): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/users/delivery-info-text`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `tma ${initData}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch delivery info text: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  return (data?.value || '') as string;
+}
+
+/**
  * Create or update a setting (ADMIN only)
  *
  * @param type - Setting type (e.g., 'SUPPORT_CHAT_ID', 'MANAGER_CHAT_ID')

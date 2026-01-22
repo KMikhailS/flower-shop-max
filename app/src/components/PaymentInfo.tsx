@@ -6,17 +6,15 @@ interface PaymentInfoProps {
   isOpen: boolean;
   onClose: () => void;
   initData?: string;
-  userRole?: string;
+  userMode?: string;
 }
 
 const PaymentInfo: React.FC<PaymentInfoProps> = ({
   isOpen,
   onClose,
   initData,
-  userRole
+  userMode
 }) => {
-  if (!isOpen) return null;
-
   const [paymentText, setPaymentText] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +59,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
     loadText();
   }, [isOpen, initData]);
 
-  const isAdmin = userRole === 'ADMIN';
+  const isAdmin = userMode === 'ADMIN';
 
   const handleStartEdit = () => {
     setDraftText(paymentText || '');
@@ -89,6 +87,8 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
       setIsSaving(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
