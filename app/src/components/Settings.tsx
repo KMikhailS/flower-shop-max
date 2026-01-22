@@ -46,6 +46,8 @@ const Settings: React.FC<SettingsProps> = ({
 
   // Delivery settings state
   const [deliveryAmount, setDeliveryAmount] = useState<string>('');
+  const [workTimeFrom, setWorkTimeFrom] = useState<string>('');
+  const [workTimeTo, setWorkTimeTo] = useState<string>('');
 
   // Categories state
   const [categories, setCategories] = useState<CategoryDTO[]>([]);
@@ -111,6 +113,8 @@ const Settings: React.FC<SettingsProps> = ({
       const smtpHostSetting = settings.find((s: Setting) => s.type === 'SMTP_HOST');
       const smtpPortSetting = settings.find((s: Setting) => s.type === 'SMTP_PORT');
       const deliveryAmountSetting = settings.find((s: Setting) => s.type === 'DELIVERY_AMOUNT');
+      const workTimeFromSetting = settings.find((s: Setting) => s.type === 'WORK_TIME_FROM');
+      const workTimeToSetting = settings.find((s: Setting) => s.type === 'WORK_TIME_TO');
 
       setSupportChatId(supportSetting?.value || '');
       setManagerChatId(managerSetting?.value || '');
@@ -120,6 +124,8 @@ const Settings: React.FC<SettingsProps> = ({
       setSmtpHost(smtpHostSetting?.value || '');
       setSmtpPort(smtpPortSetting?.value || '');
       setDeliveryAmount(deliveryAmountSetting?.value || '');
+      setWorkTimeFrom(workTimeFromSetting?.value || '');
+      setWorkTimeTo(workTimeToSetting?.value || '');
     } catch (err) {
       console.error('Failed to load settings:', err);
       setError('Не удалось загрузить настройки');
@@ -316,6 +322,48 @@ const Settings: React.FC<SettingsProps> = ({
         }
         await upsertSetting('DELIVERY_AMOUNT', deliveryAmount.trim(), initData);
       }
+
+      // Save work time settings (can be empty -> treated as 24/7 in cart)
+      const wtFrom = workTimeFrom.trim();
+      const wtTo = workTimeTo.trim();
+
+      if (wtFrom && !/^\d+$/.test(wtFrom)) {
+        setError('WORK_TIME_FROM должен быть числом (час)');
+        setIsSaving(false);
+        return;
+      }
+
+      if (wtTo && !/^\d+$/.test(wtTo)) {
+        setError('WORK_TIME_TO должен быть числом (час)');
+        setIsSaving(false);
+        return;
+      }
+
+      if (wtFrom && wtTo) {
+        const fromNum = parseInt(wtFrom, 10);
+        const toNum = parseInt(wtTo, 10);
+
+        if (fromNum < 0 || fromNum > 23) {
+          setError('WORK_TIME_FROM должен быть в диапазоне 0–23');
+          setIsSaving(false);
+          return;
+        }
+
+        if (toNum < 1 || toNum > 24) {
+          setError('WORK_TIME_TO должен быть в диапазоне 1–24');
+          setIsSaving(false);
+          return;
+        }
+
+        if (fromNum >= toNum) {
+          setError('WORK_TIME_FROM должен быть меньше чем WORK_TIME_TO');
+          setIsSaving(false);
+          return;
+        }
+      }
+
+      await upsertSetting('WORK_TIME_FROM', wtFrom, initData);
+      await upsertSetting('WORK_TIME_TO', wtTo, initData);
 
       // Success - close settings
       alert('Настройки успешно сохранены!');
@@ -565,6 +613,38 @@ const Settings: React.FC<SettingsProps> = ({
                     placeholder="0"
                     className="w-full px-4 py-3 border border-gray-300 rounded-[20px] focus:outline-none focus:border-teal disabled:opacity-50"
                   />
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <label className="text-base font-semibold text-black">
+                    Часы работы
+                  </label>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-1">От</label>
+                      <input
+                        type="text"
+                        value={workTimeFrom}
+                        onChange={(e) => setWorkTimeFrom(e.target.value)}
+                        disabled={isSaving}
+                        inputMode="numeric"
+                        placeholder="0"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-[20px] focus:outline-none focus:border-teal disabled:opacity-50"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-1">До</label>
+                      <input
+                        type="text"
+                        value={workTimeTo}
+                        onChange={(e) => setWorkTimeTo(e.target.value)}
+                        disabled={isSaving}
+                        inputMode="numeric"
+                        placeholder="24"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-[20px] focus:outline-none focus:border-teal disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <button

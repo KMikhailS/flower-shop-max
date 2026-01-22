@@ -132,6 +132,12 @@ class DeliveryAmountDTO(BaseModel):
     value: str
 
 
+class WorkTimeDTO(BaseModel):
+    """Data transfer object for shop work time hours"""
+    work_time_from: str
+    work_time_to: str
+
+
 class CartItemRequest(BaseModel):
     """Request model for cart items in order creation/update"""
     good_id: int

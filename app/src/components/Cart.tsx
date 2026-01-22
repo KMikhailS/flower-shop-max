@@ -5,7 +5,7 @@ import { useTelegramWebApp } from '../hooks/useTelegramWebApp';
 import { CartItemData } from '../App';
 import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 import { useDebounce } from '../hooks/useDebounce';
-import { createOrder, OrderRequest, fetchUserInfo, suggestAddress, AddressSuggestion, fetchDeliveryAmount } from '../api/client';
+import { createOrder, OrderRequest, fetchUserInfo, suggestAddress, AddressSuggestion, fetchDeliveryAmount, fetchWorkTime } from '../api/client';
 import DeliveryDateTimeModal from './DeliveryDateTimeModal';
 
 interface CartProps {
@@ -45,6 +45,8 @@ const Cart: React.FC<CartProps> = ({
   const [deliveryDate, setDeliveryDate] = React.useState<string>('');
   const [deliveryTime, setDeliveryTime] = React.useState<string>('');
   const [isDeliveryDateTimeOpen, setIsDeliveryDateTimeOpen] = React.useState(false);
+  const [workTimeFrom, setWorkTimeFrom] = React.useState<string>('');
+  const [workTimeTo, setWorkTimeTo] = React.useState<string>('');
 
   const debouncedAddress = useDebounce(customAddress, 300);
 
@@ -106,6 +108,24 @@ const Cart: React.FC<CartProps> = ({
       .catch((error) => {
         console.error('Failed to fetch delivery amount:', error);
         setDeliveryAmount(0);
+      });
+  }, [webApp?.initData]);
+
+  // Fetch work time settings for delivery time picker
+  React.useEffect(() => {
+    const initData = webApp?.initData || '';
+    if (!initData) return;
+
+    fetchWorkTime(initData)
+      .then(({ work_time_from, work_time_to }) => {
+        setWorkTimeFrom(work_time_from || '');
+        setWorkTimeTo(work_time_to || '');
+      })
+      .catch((error) => {
+        console.error('Failed to fetch work time:', error);
+        // Fallback to 24/7 if settings are missing/unavailable
+        setWorkTimeFrom('');
+        setWorkTimeTo('');
       });
   }, [webApp?.initData]);
 
@@ -473,6 +493,8 @@ const Cart: React.FC<CartProps> = ({
           onClose={() => setIsDeliveryDateTimeOpen(false)}
           initialDate={deliveryDate}
           initialTime={deliveryTime}
+          workTimeFrom={workTimeFrom}
+          workTimeTo={workTimeTo}
           onApply={(date, time) => {
             setDeliveryDate(date);
             setDeliveryTime(time);

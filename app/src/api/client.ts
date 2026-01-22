@@ -1133,6 +1133,36 @@ export async function fetchDeliveryAmount(initData: string): Promise<string> {
 }
 
 /**
+ * Fetch work time hours for cart time picker
+ *
+ * @param initData - Telegram WebApp initData string
+ * @returns Promise<{ work_time_from, work_time_to }> - Hour boundaries as strings (can be empty)
+ * @throws Error if request fails
+ */
+export async function fetchWorkTime(
+  initData: string
+): Promise<{ work_time_from: string; work_time_to: string }> {
+  const response = await fetch(`${API_BASE_URL}/users/work-time`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `tma ${initData}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch work time: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  return {
+    work_time_from: (data?.work_time_from || '') as string,
+    work_time_to: (data?.work_time_to || '') as string,
+  };
+}
+
+/**
  * Create or update a setting (ADMIN only)
  *
  * @param type - Setting type (e.g., 'SUPPORT_CHAT_ID', 'MANAGER_CHAT_ID')

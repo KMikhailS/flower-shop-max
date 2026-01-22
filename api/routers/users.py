@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from auth import verify_telegram_init_data, verify_admin_mode
-from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest, SupportChatDTO, PaymentInfoTextDTO, DeliveryInfoTextDTO, DeliveryAmountDTO
+from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest, SupportChatDTO, PaymentInfoTextDTO, DeliveryInfoTextDTO, DeliveryAmountDTO, WorkTimeDTO
 from database import get_user, get_user_by_username, update_user_mode, update_user_role_and_mode, add_or_update_user, get_all_settings, upsert_setting, delete_setting, get_setting_by_type
 
 logger = logging.getLogger(__name__)
@@ -108,6 +108,28 @@ async def get_delivery_amount(user_id: int = Depends(verify_telegram_init_data))
         value = setting["value"]
 
     return DeliveryAmountDTO(value=value)
+
+
+@router.get("/work-time", response_model=WorkTimeDTO)
+async def get_work_time(user_id: int = Depends(verify_telegram_init_data)):
+    """
+    Get shop work time hours for cart time picker
+
+    Requires valid Telegram WebApp initData in Authorization header
+    """
+    logger.info(f"Fetching work time for user_id={user_id}")
+
+    setting_from = await get_setting_by_type("WORK_TIME_FROM")
+    setting_to = await get_setting_by_type("WORK_TIME_TO")
+
+    work_time_from = ""
+    work_time_to = ""
+    if setting_from and setting_from.get("value"):
+        work_time_from = setting_from["value"]
+    if setting_to and setting_to.get("value"):
+        work_time_to = setting_to["value"]
+
+    return WorkTimeDTO(work_time_from=work_time_from, work_time_to=work_time_to)
 
 
 @router.get("/by-username/{username}", response_model=UserInfoDTO)

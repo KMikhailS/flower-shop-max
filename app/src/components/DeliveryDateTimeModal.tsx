@@ -5,6 +5,8 @@ type Props = {
   onClose: () => void;
   initialDate?: string; // YYYY-MM-DD
   initialTime?: string; // HH:MM
+  workTimeFrom?: string; // hour boundary (0..23), empty -> 24/7
+  workTimeTo?: string; // hour boundary (1..24), empty -> 24/7
   onApply: (date: string, time: string) => void;
 };
 
@@ -62,6 +64,8 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
   onClose,
   initialDate,
   initialTime,
+  workTimeFrom,
+  workTimeTo,
   onApply
 }) => {
   const today = useMemo(() => startOfDay(new Date()), []);
@@ -104,22 +108,61 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
   }, [isOpen]);
 
   const hourOptions = useMemo(() => {
+    const wtFrom = (workTimeFrom || '').trim();
+    const wtTo = (workTimeTo || '').trim();
+
     const options: string[] = [];
-    for (let h = 0; h <= 23; h++) {
+
+    // If at least one of settings is empty -> 24/7
+    if (!wtFrom || !wtTo) {
+      for (let h = 0; h <= 23; h++) {
+        options.push(String(h).padStart(2, '0'));
+      }
+      return options;
+    }
+
+    const fromNum = Number(wtFrom);
+    const toNum = Number(wtTo);
+    const isValid =
+      Number.isInteger(fromNum) &&
+      Number.isInteger(toNum) &&
+      fromNum >= 0 &&
+      fromNum <= 23 &&
+      toNum >= 1 &&
+      toNum <= 24 &&
+      fromNum < toNum;
+
+    if (!isValid) {
+      for (let h = 0; h <= 23; h++) {
+        options.push(String(h).padStart(2, '0'));
+      }
+      return options;
+    }
+
+    for (let h = fromNum; h <= toNum - 1; h++) {
       options.push(String(h).padStart(2, '0'));
     }
     return options;
-  }, []);
+  }, [workTimeFrom, workTimeTo]);
 
   const minuteOptions = useMemo(() => {
     const options: string[] = [];
-    for (let m = 0; m <= 59; m++) {
+    for (let m = 5; m <= 55; m += 5) {
       options.push(String(m).padStart(2, '0'));
     }
     return options;
   }, []);
 
-  const draftTime = draftHour && draftMinute ? `${draftHour}:${draftMinute}` : '';
+  const isValidHour = !!draftHour && hourOptions.includes(draftHour);
+  const isValidMinute = !!draftMinute && minuteOptions.includes(draftMinute);
+  const draftTime = isValidHour && isValidMinute ? `${draftHour}:${draftMinute}` : '';
+
+  // If initialTime or existing selection is outside available options, clear it
+  useEffect(() => {
+    if (!isOpen) return;
+    if (draftHour && !hourOptions.includes(draftHour)) setDraftHour('');
+    if (draftMinute && !minuteOptions.includes(draftMinute)) setDraftMinute('');
+  }, [isOpen, draftHour, draftMinute, hourOptions, minuteOptions]);
 
   const handleDragStart = (e: React.PointerEvent<HTMLDivElement>) => {
     // Only start drag on primary button for mouse
@@ -367,9 +410,7 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
                   onChange={(e) => setDraftHour(e.target.value)}
                   className="w-full h-[50px] px-4 rounded-[14px] bg-gray-light text-base font-semibold text-black"
                 >
-                  <option value="" disabled>
-                    00
-                  </option>
+                  <option value="" disabled />
                   {hourOptions.map((h) => (
                     <option key={h} value={h}>
                       {h}
@@ -384,9 +425,7 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
                   onChange={(e) => setDraftMinute(e.target.value)}
                   className="w-full h-[50px] px-4 rounded-[14px] bg-gray-light text-base font-semibold text-black"
                 >
-                  <option value="" disabled>
-                    00
-                  </option>
+                  <option value="" disabled />
                   {minuteOptions.map((m) => (
                     <option key={m} value={m}>
                       {m}
