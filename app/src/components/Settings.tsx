@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AppHeader from './AppHeader';
 import {
   fetchSettings,
   updateUserMode,
   upsertSetting,
+  deleteSetting,
   Setting,
   fetchAllCategories,
   createCategory,
@@ -68,6 +69,9 @@ const Settings: React.FC<SettingsProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Tracks which setting types existed when we loaded settings (so we can delete them when user clears input)
+  const existingSettingTypesRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     if (isOpen) {
       // Prevent body scroll when modal is open
@@ -103,6 +107,7 @@ const Settings: React.FC<SettingsProps> = ({
 
     try {
       const settings = await fetchSettings(initData);
+      existingSettingTypesRef.current = new Set(settings.map((s: Setting) => s.type));
 
       // Find specific settings by type
       const supportSetting = settings.find((s: Setting) => s.type === 'SUPPORT_CHAT_ID');
@@ -265,65 +270,105 @@ const Settings: React.FC<SettingsProps> = ({
         }
       }
 
-      // Save support chat ID if provided
-      if (supportChatId.trim()) {
-        await upsertSetting('SUPPORT_CHAT_ID', supportChatId.trim(), initData);
+      // Save support chat ID (empty -> delete)
+      const supportChatIdValue = supportChatId.trim();
+      if (supportChatIdValue) {
+        await upsertSetting('SUPPORT_CHAT_ID', supportChatIdValue, initData);
+        existingSettingTypesRef.current.add('SUPPORT_CHAT_ID');
+      } else if (existingSettingTypesRef.current.has('SUPPORT_CHAT_ID')) {
+        await deleteSetting('SUPPORT_CHAT_ID', initData);
+        existingSettingTypesRef.current.delete('SUPPORT_CHAT_ID');
       }
 
-      // Save manager chat ID if provided
-      if (managerChatId.trim()) {
+      // Save manager chat ID (empty -> delete)
+      const managerChatIdValue = managerChatId.trim();
+      if (managerChatIdValue) {
         // Validate: digits with optional minus sign (for groups/supergroups)
-        if (!/^-?\d+$/.test(managerChatId.trim())) {
+        if (!/^-?\d+$/.test(managerChatIdValue)) {
           setError('ID чата менеджера должен быть числом (может быть отрицательным)');
           setIsSaving(false);
           return;
         }
-        await upsertSetting('MANAGER_CHAT_ID', managerChatId.trim(), initData);
+        await upsertSetting('MANAGER_CHAT_ID', managerChatIdValue, initData);
+        existingSettingTypesRef.current.add('MANAGER_CHAT_ID');
+      } else if (existingSettingTypesRef.current.has('MANAGER_CHAT_ID')) {
+        await deleteSetting('MANAGER_CHAT_ID', initData);
+        existingSettingTypesRef.current.delete('MANAGER_CHAT_ID');
       }
 
-      // Save order email if provided
-      if (orderEmail.trim()) {
-        await upsertSetting('ORDER_EMAIL', orderEmail.trim(), initData);
+      // Save order email (empty -> delete)
+      const orderEmailValue = orderEmail.trim();
+      if (orderEmailValue) {
+        await upsertSetting('ORDER_EMAIL', orderEmailValue, initData);
+        existingSettingTypesRef.current.add('ORDER_EMAIL');
+      } else if (existingSettingTypesRef.current.has('ORDER_EMAIL')) {
+        await deleteSetting('ORDER_EMAIL', initData);
+        existingSettingTypesRef.current.delete('ORDER_EMAIL');
       }
 
-      // Save order email to if provided
-      if (orderEmailTo.trim()) {
-        await upsertSetting('ORDER_EMAIL_TO', orderEmailTo.trim(), initData);
+      // Save order email to (empty -> delete)
+      const orderEmailToValue = orderEmailTo.trim();
+      if (orderEmailToValue) {
+        await upsertSetting('ORDER_EMAIL_TO', orderEmailToValue, initData);
+        existingSettingTypesRef.current.add('ORDER_EMAIL_TO');
+      } else if (existingSettingTypesRef.current.has('ORDER_EMAIL_TO')) {
+        await deleteSetting('ORDER_EMAIL_TO', initData);
+        existingSettingTypesRef.current.delete('ORDER_EMAIL_TO');
       }
 
-      // Save order email password if provided
-      if (orderEmailPassword.trim()) {
-        await upsertSetting('ORDER_EMAIL_PASSWORD', orderEmailPassword.trim(), initData);
+      // Save order email password (empty -> delete)
+      const orderEmailPasswordValue = orderEmailPassword.trim();
+      if (orderEmailPasswordValue) {
+        await upsertSetting('ORDER_EMAIL_PASSWORD', orderEmailPasswordValue, initData);
+        existingSettingTypesRef.current.add('ORDER_EMAIL_PASSWORD');
+      } else if (existingSettingTypesRef.current.has('ORDER_EMAIL_PASSWORD')) {
+        await deleteSetting('ORDER_EMAIL_PASSWORD', initData);
+        existingSettingTypesRef.current.delete('ORDER_EMAIL_PASSWORD');
       }
 
-      // Save SMTP host if provided
-      if (smtpHost.trim()) {
-        await upsertSetting('SMTP_HOST', smtpHost.trim(), initData);
+      // Save SMTP host (empty -> delete)
+      const smtpHostValue = smtpHost.trim();
+      if (smtpHostValue) {
+        await upsertSetting('SMTP_HOST', smtpHostValue, initData);
+        existingSettingTypesRef.current.add('SMTP_HOST');
+      } else if (existingSettingTypesRef.current.has('SMTP_HOST')) {
+        await deleteSetting('SMTP_HOST', initData);
+        existingSettingTypesRef.current.delete('SMTP_HOST');
       }
 
-      // Save SMTP port if provided
-      if (smtpPort.trim()) {
+      // Save SMTP port (empty -> delete)
+      const smtpPortValue = smtpPort.trim();
+      if (smtpPortValue) {
         // Validate: digits only
-        if (!/^\d+$/.test(smtpPort.trim())) {
+        if (!/^\d+$/.test(smtpPortValue)) {
           setError('SMTP порт должен быть числом');
           setIsSaving(false);
           return;
         }
-        await upsertSetting('SMTP_PORT', smtpPort.trim(), initData);
+        await upsertSetting('SMTP_PORT', smtpPortValue, initData);
+        existingSettingTypesRef.current.add('SMTP_PORT');
+      } else if (existingSettingTypesRef.current.has('SMTP_PORT')) {
+        await deleteSetting('SMTP_PORT', initData);
+        existingSettingTypesRef.current.delete('SMTP_PORT');
       }
 
-      // Save delivery amount if provided
-      if (deliveryAmount.trim()) {
+      // Save delivery amount (empty -> delete)
+      const deliveryAmountValue = deliveryAmount.trim();
+      if (deliveryAmountValue) {
         // Validate: digits only (рубли)
-        if (!/^\d+$/.test(deliveryAmount.trim())) {
+        if (!/^\d+$/.test(deliveryAmountValue)) {
           setError('Стоимость доставки должна быть числом');
           setIsSaving(false);
           return;
         }
-        await upsertSetting('DELIVERY_AMOUNT', deliveryAmount.trim(), initData);
+        await upsertSetting('DELIVERY_AMOUNT', deliveryAmountValue, initData);
+        existingSettingTypesRef.current.add('DELIVERY_AMOUNT');
+      } else if (existingSettingTypesRef.current.has('DELIVERY_AMOUNT')) {
+        await deleteSetting('DELIVERY_AMOUNT', initData);
+        existingSettingTypesRef.current.delete('DELIVERY_AMOUNT');
       }
 
-      // Save work time settings (can be empty -> treated as 24/7 in cart)
+      // Save work time settings (can be empty -> treated as 24/7 in cart; empty -> delete)
       const wtFrom = workTimeFrom.trim();
       const wtTo = workTimeTo.trim();
 
@@ -362,12 +407,24 @@ const Settings: React.FC<SettingsProps> = ({
         }
       }
 
-      await upsertSetting('WORK_TIME_FROM', wtFrom, initData);
-      await upsertSetting('WORK_TIME_TO', wtTo, initData);
+      if (wtFrom) {
+        await upsertSetting('WORK_TIME_FROM', wtFrom, initData);
+        existingSettingTypesRef.current.add('WORK_TIME_FROM');
+      } else if (existingSettingTypesRef.current.has('WORK_TIME_FROM')) {
+        await deleteSetting('WORK_TIME_FROM', initData);
+        existingSettingTypesRef.current.delete('WORK_TIME_FROM');
+      }
 
-      // Success - close settings
+      if (wtTo) {
+        await upsertSetting('WORK_TIME_TO', wtTo, initData);
+        existingSettingTypesRef.current.add('WORK_TIME_TO');
+      } else if (existingSettingTypesRef.current.has('WORK_TIME_TO')) {
+        await deleteSetting('WORK_TIME_TO', initData);
+        existingSettingTypesRef.current.delete('WORK_TIME_TO');
+      }
+
+      // Success - keep settings open (don't navigate away)
       alert('Настройки успешно сохранены!');
-      onClose();
     } catch (err) {
       console.error('Failed to save settings:', err);
       setError('Ошибка при сохранении настроек');
