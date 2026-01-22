@@ -380,7 +380,7 @@ const Settings: React.FC<SettingsProps> = ({
 
   return (
     <div className="fixed inset-0 bg-white z-50 max-w-[402px] mx-auto">
-      <div className="h-full overflow-y-auto">
+      <div className="h-full overflow-y-auto overflow-x-hidden">
         {/* Header */}
         <AppHeader
           title="FanFanTulpan"
@@ -439,47 +439,49 @@ const Settings: React.FC<SettingsProps> = ({
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveTab('notifications')}
-                className={`flex-1 py-2 px-3 rounded-[20px] text-sm font-medium transition-colors ${
-                  activeTab === 'notifications'
-                    ? 'bg-teal text-white'
-                    : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                Уведомления
-              </button>
-              <button
-                onClick={() => setActiveTab('delivery')}
-                className={`flex-1 py-2 px-3 rounded-[20px] text-sm font-medium transition-colors ${
-                  activeTab === 'delivery'
-                    ? 'bg-teal text-white'
-                    : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                Доставка
-              </button>
-              <button
-                onClick={() => setActiveTab('categories')}
-                className={`flex-1 py-2 px-3 rounded-[20px] text-sm font-medium transition-colors ${
-                  activeTab === 'categories'
-                    ? 'bg-teal text-white'
-                    : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                Категории
-              </button>
-              <button
-                onClick={() => setActiveTab('users')}
-                className={`flex-1 py-2 px-3 rounded-[20px] text-sm font-medium transition-colors ${
-                  activeTab === 'users'
-                    ? 'bg-teal text-white'
-                    : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                Пользователи
-              </button>
+            <div className="overflow-x-auto overscroll-x-contain">
+              <div className="flex gap-2 min-w-max">
+                <button
+                  onClick={() => setActiveTab('notifications')}
+                  className={`flex-1 py-2 px-3 rounded-[20px] text-sm font-medium transition-colors ${
+                    activeTab === 'notifications'
+                      ? 'bg-teal text-white'
+                      : 'bg-gray-200 text-gray-600'
+                  }`}
+                >
+                  Уведомления
+                </button>
+                <button
+                  onClick={() => setActiveTab('delivery')}
+                  className={`flex-1 py-2 px-3 rounded-[20px] text-sm font-medium transition-colors ${
+                    activeTab === 'delivery'
+                      ? 'bg-teal text-white'
+                      : 'bg-gray-200 text-gray-600'
+                  }`}
+                >
+                  Доставка
+                </button>
+                <button
+                  onClick={() => setActiveTab('categories')}
+                  className={`flex-1 py-2 px-3 rounded-[20px] text-sm font-medium transition-colors ${
+                    activeTab === 'categories'
+                      ? 'bg-teal text-white'
+                      : 'bg-gray-200 text-gray-600'
+                  }`}
+                >
+                  Категории
+                </button>
+                <button
+                  onClick={() => setActiveTab('users')}
+                  className={`flex-1 py-2 px-3 rounded-[20px] text-sm font-medium transition-colors ${
+                    activeTab === 'users'
+                      ? 'bg-teal text-white'
+                      : 'bg-gray-200 text-gray-600'
+                  }`}
+                >
+                  Пользователи
+                </button>
+              </div>
             </div>
 
             {/* Notifications Tab */}
