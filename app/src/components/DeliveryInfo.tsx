@@ -142,7 +142,7 @@ const DeliveryInfo: React.FC<DeliveryInfoProps> = ({
             value={draftText}
             onChange={(e) => setDraftText(e.target.value)}
             placeholder="Введите текст о доставке"
-            rows={8}
+            rows={16}
             className="w-full px-4 py-3 rounded-[20px] bg-gray-light border-none text-base text-black placeholder-gray-medium focus:outline-none focus:ring-2 focus:ring-teal resize-none"
           />
         ) : (
