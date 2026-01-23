@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AppHeader from './AppHeader';
-import { fetchAllOrders, OrderDTO, fetchAllGoods, GoodDTO, updateOrderStatus, OrdersFilterParams } from '../api/client';
+import { fetchAllOrders, OrderDTO, fetchAllGoods, GoodDTO, updateOrderStatus, OrdersFilterParams, fetchDeliveryAmount, fetchPostcardAmount } from '../api/client';
 
 type DatePeriod = 'all' | 'today' | '3days' | 'week' | 'month' | 'custom';
 const ORDERS_PER_PAGE = 20;
@@ -19,6 +19,8 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
 }) => {
   const [orders, setOrders] = useState<OrderDTO[]>([]);
   const [goods, setGoods] = useState<GoodDTO[]>([]);
+  const [deliveryAmount, setDeliveryAmount] = useState<number>(0);
+  const [postcardAmount, setPostcardAmount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusPopupOrderId, setStatusPopupOrderId] = useState<number | null>(null);
@@ -134,6 +136,24 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
     };
 
     loadGoods();
+  }, [isOpen, initData]);
+
+  // Load service amounts once when screen opens
+  useEffect(() => {
+    if (!isOpen || !initData) return;
+
+    Promise.all([fetchDeliveryAmount(initData), fetchPostcardAmount(initData)])
+      .then(([deliveryAmountValue, postcardAmountValue]) => {
+        const parsedDelivery = parseFloat(String(deliveryAmountValue).replace(/[^\d]/g, '')) || 0;
+        const parsedPostcard = parseFloat(String(postcardAmountValue).replace(/[^\d]/g, '')) || 0;
+        setDeliveryAmount(parsedDelivery);
+        setPostcardAmount(parsedPostcard);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch service amounts:', err);
+        setDeliveryAmount(0);
+        setPostcardAmount(0);
+      });
   }, [isOpen, initData]);
 
   // Load orders when filters or page changes
@@ -526,11 +546,43 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
                       ))}
                     </div>
 
+                    {/* Services */}
+                    {(() => {
+                      const hasDeliveryService = order.delivery_type === 'COURIER';
+                      const hasPostcardService = Boolean(order.postcard_text && order.postcard_text.trim());
+                      const services: Array<{ label: string; amount: number }> = [];
+                      if (hasDeliveryService) services.push({ label: 'Доставка', amount: deliveryAmount });
+                      if (hasPostcardService) services.push({ label: 'Открытка', amount: postcardAmount });
+
+                      if (services.length === 0) return null;
+                      return (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <div className="text-sm font-medium mb-2">Услуги:</div>
+                          <div className="space-y-1">
+                            {services.map((service) => (
+                              <div
+                                key={service.label}
+                                className="flex justify-between items-center text-sm text-black"
+                              >
+                                <span>{service.label}</span>
+                                <span className="font-semibold">{service.amount} руб.</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {/* Order Total */}
                     <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
                       <div className="font-semibold">Итого:</div>
                       <div className="text-lg font-bold text-teal">
-                        {order.cart_items.reduce((sum, item) => sum + (item.count * item.price), 0)} руб.
+                        {(() => {
+                          const goodsTotal = order.cart_items.reduce((sum, item) => sum + (item.count * item.price), 0);
+                          const deliveryCost = order.delivery_type === 'COURIER' ? deliveryAmount : 0;
+                          const postcardCost = order.postcard_text && order.postcard_text.trim() ? postcardAmount : 0;
+                          return goodsTotal + deliveryCost + postcardCost;
+                        })()} руб.
                       </div>
                     </div>
 

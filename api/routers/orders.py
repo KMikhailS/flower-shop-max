@@ -68,16 +68,18 @@ async def create_order_endpoint(
         # Validate postcard text (optional)
         postcard_text: Optional[str] = None
         if order.postcard_text is not None:
-            postcard_text = order.postcard_text.strip()
+            raw_postcard_text = order.postcard_text
+            if len(raw_postcard_text) > 300:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Текст открытки не должен превышать 300 символов"
+                )
+
+            postcard_text = raw_postcard_text.strip()
             if not postcard_text:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Текст открытки не должен быть пустым"
-                )
-            if len(postcard_text) > 300:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Текст открытки не должен превышать 300 символов"
                 )
 
         # Create order in database

@@ -197,7 +197,7 @@ const Cart: React.FC<CartProps> = ({
       webApp?.showAlert('Пожалуйста, введите текст для открытки');
       return;
     }
-    if (addPostcard && postcardText.trim().length > 300) {
+    if (addPostcard && postcardText.length > 300) {
       webApp?.HapticFeedback.notificationOccurred('error');
       webApp?.showAlert('Текст для открытки не должен превышать 300 символов');
       return;
@@ -295,7 +295,7 @@ const Cart: React.FC<CartProps> = ({
         delivery_address,
         delivery_date: delivery_type === 'COURIER' ? deliveryDate : undefined,
         delivery_time: delivery_type === 'COURIER' ? deliveryTime : undefined,
-        postcard_text: addPostcard ? postcardText.trim() : undefined,
+        postcard_text: addPostcard ? postcardText : undefined,
         cart_items: cartItems.map(item => ({
           good_id: item.product.id,
           count: item.quantity,

@@ -59,8 +59,33 @@ async def send_order_notification_to_manager(order_data: dict) -> bool:
             except Exception:
                 delivery_schedule_text = str(order_data['delivery_date_time'])
         
-        # Calculate total price
-        total_price = sum(item['price'] * item['count'] for item in order_data['cart_items'])
+        def parse_amount(value: Optional[str]) -> int:
+            digits = "".join(ch for ch in str(value or "") if ch.isdigit())
+            return int(digits) if digits else 0
+
+        # Prepare services (delivery / postcard) and calculate total price
+        goods_total = sum(item['price'] * item['count'] for item in order_data['cart_items'])
+
+        delivery_cost = 0
+        postcard_cost = 0
+        services_lines: list[str] = []
+
+        if order_data.get('delivery_type') == 'COURIER':
+            delivery_setting = await get_setting_by_type('DELIVERY_AMOUNT')
+            delivery_cost = parse_amount(delivery_setting.get('value') if delivery_setting else None)
+            services_lines.append(f"- Доставка — {delivery_cost}₽")
+
+        postcard_text_raw = (order_data.get('postcard_text') or '').strip()
+        if postcard_text_raw:
+            postcard_setting = await get_setting_by_type('POSTCARD_AMOUNT')
+            postcard_cost = parse_amount(postcard_setting.get('value') if postcard_setting else None)
+            services_lines.append(f"- Открытка — {postcard_cost}₽")
+
+        services_block = ""
+        if services_lines:
+            services_block = "🧾 <b>Услуги:</b>\n" + "\n".join(services_lines) + "\n\n"
+
+        total_price = goods_total + delivery_cost + postcard_cost
         
         # Format order items
         items_text = ""
@@ -77,7 +102,6 @@ async def send_order_notification_to_manager(order_data: dict) -> bool:
         
         # Build notification message
         schedule_line = f"📅 <b>Доставка к:</b> {delivery_schedule_text}\n" if delivery_schedule_text else ""
-        postcard_text_raw = (order_data.get('postcard_text') or '').strip()
         postcard_block = ""
         if postcard_text_raw:
             postcard_block = f"\n💌 <b>Текст открытки:</b>\n{html.escape(postcard_text_raw)}\n"
@@ -88,6 +112,7 @@ async def send_order_notification_to_manager(order_data: dict) -> bool:
             f"Номер телефона: {phone}\n\n"
             f"📦 <b>Товары:</b>\n"
             f"{items_text}\n"
+            f"{services_block}"
             f"💰 <b>Итого: {total_price}₽</b>\n\n"
             f"🚚 <b>Доставка:</b> {delivery_type_text}\n"
             f"📍 <b>Адрес:</b> {order_data['delivery_address']}\n"
@@ -189,8 +214,33 @@ async def send_order_notification_to_email(order_data: dict) -> bool:
             except Exception:
                 delivery_schedule_text = str(order_data['delivery_date_time'])
 
-        # Calculate total price
-        total_price = sum(item['price'] * item['count'] for item in order_data['cart_items'])
+        def parse_amount(value: Optional[str]) -> int:
+            digits = "".join(ch for ch in str(value or "") if ch.isdigit())
+            return int(digits) if digits else 0
+
+        # Prepare services (delivery / postcard) and calculate total price
+        goods_total = sum(item['price'] * item['count'] for item in order_data['cart_items'])
+
+        delivery_cost = 0
+        postcard_cost = 0
+        services_lines: list[str] = []
+
+        if order_data.get('delivery_type') == 'COURIER':
+            delivery_setting = await get_setting_by_type('DELIVERY_AMOUNT')
+            delivery_cost = parse_amount(delivery_setting.get('value') if delivery_setting else None)
+            services_lines.append(f"- Доставка — {delivery_cost} руб.")
+
+        postcard_text_raw = (order_data.get('postcard_text') or '').strip()
+        if postcard_text_raw:
+            postcard_setting = await get_setting_by_type('POSTCARD_AMOUNT')
+            postcard_cost = parse_amount(postcard_setting.get('value') if postcard_setting else None)
+            services_lines.append(f"- Открытка — {postcard_cost} руб.")
+
+        services_block = ""
+        if services_lines:
+            services_block = "УСЛУГИ:\n" + "\n".join(services_lines) + "\n\n"
+
+        total_price = goods_total + delivery_cost + postcard_cost
 
         # Format order items
         items_text = ""
@@ -209,7 +259,6 @@ async def send_order_notification_to_email(order_data: dict) -> bool:
         subject = f"Новый заказ #{order_data['id']} - FanFanTulpan"
 
         schedule_line = f"\nДОСТАВКА К: {delivery_schedule_text}" if delivery_schedule_text else ""
-        postcard_text_raw = (order_data.get('postcard_text') or '').strip()
         postcard_line = f"\n\nОТКРЫТКА:\n{postcard_text_raw}" if postcard_text_raw else ""
         body = f"""
 НОВЫЙ ЗАКАЗ #{order_data['id']}
@@ -220,7 +269,7 @@ Username: {'@' + username if username != 'не указан' else 'не указ
 
 ТОВАРЫ:
 {items_text}
-ИТОГО: {total_price} руб.
+{services_block}ИТОГО: {total_price} руб.
 
 ДОСТАВКА: {delivery_type_text}
 АДРЕС: {order_data['delivery_address']}
