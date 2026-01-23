@@ -74,6 +74,11 @@ async def create_order_endpoint(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Текст открытки не должен быть пустым"
                 )
+            if len(postcard_text) > 300:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Текст открытки не должен превышать 300 символов"
+                )
 
         # Create order in database
         created_order = await create_order(

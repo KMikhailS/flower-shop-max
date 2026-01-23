@@ -197,6 +197,11 @@ const Cart: React.FC<CartProps> = ({
       webApp?.showAlert('Пожалуйста, введите текст для открытки');
       return;
     }
+    if (addPostcard && postcardText.trim().length > 300) {
+      webApp?.HapticFeedback.notificationOccurred('error');
+      webApp?.showAlert('Текст для открытки не должен превышать 300 символов');
+      return;
+    }
 
     // Проверяем наличие user
     if (!user) {
@@ -427,11 +432,14 @@ const Cart: React.FC<CartProps> = ({
               <div className="mt-3">
                 <div className="w-full px-4 py-4 rounded-[15px] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.25)] bg-white">
                   <label className="block">
-                    <div className="text-xs text-gray-500">Текст для открытки</div>
                     <textarea
                       value={postcardText}
-                      onChange={(e) => setPostcardText(e.target.value)}
-                      placeholder="Напишите текст для открытки"
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        setPostcardText(next.length <= 300 ? next : next.slice(0, 300));
+                      }}
+                      placeholder="Текст для открытки (не более 300 символов)"
+                      maxLength={300}
                       rows={3}
                       className="w-full mt-2 text-base font-semibold leading-[1.174] text-black bg-transparent outline-none resize-none"
                     />
