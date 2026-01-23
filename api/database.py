@@ -100,6 +100,7 @@ async def init_db():
                 delivery_type TEXT,
                 delivery_address TEXT,
                 delivery_date_time TEXT,
+                postcard_text TEXT,
                 FOREIGN KEY (user_id) REFERENCES user_info(id)
             )
         """)
@@ -1206,6 +1207,7 @@ async def create_order(
     delivery_type: str,
     delivery_address: str,
     delivery_date_time: Optional[str],
+    postcard_text: Optional[str],
     cart_items: list[dict],
     createuser: int
 ) -> dict:
@@ -1216,9 +1218,9 @@ async def create_order(
 
         # Create order
         cursor = await db.execute(
-            """INSERT INTO orders (status, user_id, createstamp, changestamp, createuser, changeuser, delivery_type, delivery_address, delivery_date_time)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (status, user_id, current_time, current_time, createuser, createuser, delivery_type, delivery_address, delivery_date_time)
+            """INSERT INTO orders (status, user_id, createstamp, changestamp, createuser, changeuser, delivery_type, delivery_address, delivery_date_time, postcard_text)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (status, user_id, current_time, current_time, createuser, createuser, delivery_type, delivery_address, delivery_date_time, postcard_text)
         )
         order_id = cursor.lastrowid
 
@@ -1328,6 +1330,7 @@ async def get_order_by_id(order_id: int) -> dict:
             'delivery_type': order_row['delivery_type'],
             'delivery_address': order_row['delivery_address'],
             'delivery_date_time': order_row['delivery_date_time'],
+            'postcard_text': order_row['postcard_text'],
             'cart_items': [
                 {
                     'id': row['id'],
@@ -1449,6 +1452,7 @@ async def get_orders(
                 'delivery_type': order_row['delivery_type'],
                 'delivery_address': order_row['delivery_address'],
                 'delivery_date_time': order_row['delivery_date_time'],
+                'postcard_text': order_row['postcard_text'],
                 'cart_items': [
                     {
                         'id': row['id'],

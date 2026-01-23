@@ -132,6 +132,11 @@ class DeliveryAmountDTO(BaseModel):
     value: str
 
 
+class PostcardAmountDTO(BaseModel):
+    """Data transfer object for postcard amount"""
+    value: str
+
+
 class WorkTimeDTO(BaseModel):
     """Data transfer object for shop work time hours"""
     work_time_from: str
@@ -162,6 +167,7 @@ class OrderRequest(BaseModel):
     # For courier delivery: separate date and time inputs from frontend (combined on backend)
     delivery_date: Optional[str] = None
     delivery_time: Optional[str] = None
+    postcard_text: Optional[str] = None
     cart_items: list[CartItemRequest]
 
 
@@ -178,6 +184,7 @@ class OrderDTO(BaseModel):
     delivery_type: str
     delivery_address: str
     delivery_date_time: Optional[str] = None
+    postcard_text: Optional[str] = None
     cart_items: list[CartItemDTO]
 
 

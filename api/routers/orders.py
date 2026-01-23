@@ -65,6 +65,16 @@ async def create_order_endpoint(
                     detail="Некорректный формат даты/времени доставки"
                 )
 
+        # Validate postcard text (optional)
+        postcard_text: Optional[str] = None
+        if order.postcard_text is not None:
+            postcard_text = order.postcard_text.strip()
+            if not postcard_text:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Текст открытки не должен быть пустым"
+                )
+
         # Create order in database
         created_order = await create_order(
             status=order.status,
@@ -72,6 +82,7 @@ async def create_order_endpoint(
             delivery_type=order.delivery_type,
             delivery_address=order.delivery_address,
             delivery_date_time=delivery_date_time,
+            postcard_text=postcard_text,
             cart_items=cart_items_dict,
             createuser=user_id
         )
@@ -113,6 +124,7 @@ async def create_order_endpoint(
             delivery_type=created_order["delivery_type"],
             delivery_address=created_order["delivery_address"],
             delivery_date_time=created_order.get("delivery_date_time"),
+            postcard_text=created_order.get("postcard_text"),
             cart_items=[CartItemDTO(**item) for item in created_order["cart_items"]]
         )
     except HTTPException:
@@ -173,6 +185,7 @@ async def update_order_endpoint(
             delivery_type=updated_order["delivery_type"],
             delivery_address=updated_order["delivery_address"],
             delivery_date_time=updated_order.get("delivery_date_time"),
+            postcard_text=updated_order.get("postcard_text"),
             cart_items=[CartItemDTO(**item) for item in updated_order["cart_items"]]
         )
     except ValueError as e:
@@ -228,6 +241,7 @@ async def get_my_orders_endpoint(
                 delivery_type=order["delivery_type"],
                 delivery_address=order["delivery_address"],
                 delivery_date_time=order.get("delivery_date_time"),
+                postcard_text=order.get("postcard_text"),
                 cart_items=[CartItemDTO(**item) for item in order["cart_items"]]
             )
             for order in orders
@@ -272,6 +286,7 @@ async def get_order_endpoint(
             delivery_type=order["delivery_type"],
             delivery_address=order["delivery_address"],
             delivery_date_time=order.get("delivery_date_time"),
+            postcard_text=order.get("postcard_text"),
             cart_items=[CartItemDTO(**item) for item in order["cart_items"]]
         )
     except ValueError as e:
@@ -346,6 +361,7 @@ async def get_orders_endpoint(
                 delivery_type=order["delivery_type"],
                 delivery_address=order["delivery_address"],
                 delivery_date_time=order.get("delivery_date_time"),
+                postcard_text=order.get("postcard_text"),
                 cart_items=[CartItemDTO(**item) for item in order["cart_items"]]
             ))
 

@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from auth import verify_telegram_init_data, verify_admin_mode
-from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest, SupportChatDTO, PaymentInfoTextDTO, DeliveryInfoTextDTO, DeliveryAmountDTO, WorkTimeDTO
+from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest, SupportChatDTO, PaymentInfoTextDTO, DeliveryInfoTextDTO, DeliveryAmountDTO, PostcardAmountDTO, WorkTimeDTO
 from database import get_user, get_user_by_username, update_user_mode, update_user_role_and_mode, add_or_update_user, get_all_settings, upsert_setting, delete_setting, get_setting_by_type
 
 logger = logging.getLogger(__name__)
@@ -108,6 +108,23 @@ async def get_delivery_amount(user_id: int = Depends(verify_telegram_init_data))
         value = setting["value"]
 
     return DeliveryAmountDTO(value=value)
+
+
+@router.get("/postcard-amount", response_model=PostcardAmountDTO)
+async def get_postcard_amount(user_id: int = Depends(verify_telegram_init_data)):
+    """
+    Get postcard amount for cart calculations
+
+    Requires valid Telegram WebApp initData in Authorization header
+    """
+    logger.info(f"Fetching postcard amount for user_id={user_id}")
+
+    setting = await get_setting_by_type("POSTCARD_AMOUNT")
+    value = "0"
+    if setting and setting.get("value"):
+        value = setting["value"]
+
+    return PostcardAmountDTO(value=value)
 
 
 @router.get("/work-time", response_model=WorkTimeDTO)

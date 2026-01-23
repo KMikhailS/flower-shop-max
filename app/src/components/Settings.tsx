@@ -46,6 +46,7 @@ const Settings: React.FC<SettingsProps> = ({
 
   // Delivery settings state
   const [deliveryAmount, setDeliveryAmount] = useState<string>('');
+  const [postcardAmount, setPostcardAmount] = useState<string>('');
   const [workTimeFrom, setWorkTimeFrom] = useState<string>('');
   const [workTimeTo, setWorkTimeTo] = useState<string>('');
 
@@ -117,6 +118,7 @@ const Settings: React.FC<SettingsProps> = ({
       const smtpHostSetting = settings.find((s: Setting) => s.type === 'SMTP_HOST');
       const smtpPortSetting = settings.find((s: Setting) => s.type === 'SMTP_PORT');
       const deliveryAmountSetting = settings.find((s: Setting) => s.type === 'DELIVERY_AMOUNT');
+      const postcardAmountSetting = settings.find((s: Setting) => s.type === 'POSTCARD_AMOUNT');
       const workTimeFromSetting = settings.find((s: Setting) => s.type === 'WORK_TIME_FROM');
       const workTimeToSetting = settings.find((s: Setting) => s.type === 'WORK_TIME_TO');
 
@@ -128,6 +130,7 @@ const Settings: React.FC<SettingsProps> = ({
       setSmtpHost(smtpHostSetting?.value || '');
       setSmtpPort(smtpPortSetting?.value || '');
       setDeliveryAmount(deliveryAmountSetting?.value || '');
+      setPostcardAmount(postcardAmountSetting?.value || '');
       setWorkTimeFrom(workTimeFromSetting?.value || '');
       setWorkTimeTo(workTimeToSetting?.value || '');
     } catch (err) {
@@ -365,6 +368,22 @@ const Settings: React.FC<SettingsProps> = ({
       } else if (existingSettingTypesRef.current.has('DELIVERY_AMOUNT')) {
         await deleteSetting('DELIVERY_AMOUNT', initData);
         existingSettingTypesRef.current.delete('DELIVERY_AMOUNT');
+      }
+
+      // Save postcard amount (empty -> delete)
+      const postcardAmountValue = postcardAmount.trim();
+      if (postcardAmountValue) {
+        // Validate: digits only (рубли)
+        if (!/^\d+$/.test(postcardAmountValue)) {
+          setError('Стоимость открытки должна быть числом');
+          setIsSaving(false);
+          return;
+        }
+        await upsertSetting('POSTCARD_AMOUNT', postcardAmountValue, initData);
+        existingSettingTypesRef.current.add('POSTCARD_AMOUNT');
+      } else if (existingSettingTypesRef.current.has('POSTCARD_AMOUNT')) {
+        await deleteSetting('POSTCARD_AMOUNT', initData);
+        existingSettingTypesRef.current.delete('POSTCARD_AMOUNT');
       }
 
       // Save work time settings (can be empty -> treated as 24/7 in cart; empty -> delete)
@@ -666,6 +685,21 @@ const Settings: React.FC<SettingsProps> = ({
                     type="text"
                     value={deliveryAmount}
                     onChange={(e) => setDeliveryAmount(e.target.value)}
+                    disabled={isSaving}
+                    inputMode="numeric"
+                    placeholder="0"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-[20px] focus:outline-none focus:border-teal disabled:opacity-50"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <label className="text-base font-semibold text-black">
+                    Стоимость открытки
+                  </label>
+                  <input
+                    type="text"
+                    value={postcardAmount}
+                    onChange={(e) => setPostcardAmount(e.target.value)}
                     disabled={isSaving}
                     inputMode="numeric"
                     placeholder="0"

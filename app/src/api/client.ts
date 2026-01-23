@@ -1133,6 +1133,31 @@ export async function fetchDeliveryAmount(initData: string): Promise<string> {
 }
 
 /**
+ * Fetch postcard amount for cart calculations
+ *
+ * @param initData - Telegram WebApp initData string
+ * @returns Promise<string> - Postcard amount (string number)
+ * @throws Error if request fails
+ */
+export async function fetchPostcardAmount(initData: string): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/users/postcard-amount`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `tma ${initData}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch postcard amount: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  return (data?.value || '0') as string;
+}
+
+/**
  * Fetch work time hours for cart time picker
  *
  * @param initData - Telegram WebApp initData string
@@ -1290,6 +1315,7 @@ export interface OrderRequest {
   // For courier delivery: separate date and time chosen in UI (combined on backend)
   delivery_date?: string;
   delivery_time?: string;
+  postcard_text?: string;
   cart_items: CartItemRequest[];
 }
 
@@ -1308,6 +1334,7 @@ export interface OrderDTO {
   delivery_type: string;
   delivery_address: string;
   delivery_date_time?: string | null;
+  postcard_text?: string | null;
   cart_items: CartItemDTO[];
 }
 

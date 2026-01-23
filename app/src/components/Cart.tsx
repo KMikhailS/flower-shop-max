@@ -5,7 +5,7 @@ import { useTelegramWebApp } from '../hooks/useTelegramWebApp';
 import { CartItemData } from '../App';
 import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 import { useDebounce } from '../hooks/useDebounce';
-import { createOrder, OrderRequest, fetchUserInfo, suggestAddress, AddressSuggestion, fetchDeliveryAmount, fetchWorkTime } from '../api/client';
+import { createOrder, OrderRequest, fetchUserInfo, suggestAddress, AddressSuggestion, fetchDeliveryAmount, fetchPostcardAmount, fetchWorkTime } from '../api/client';
 import DeliveryDateTimeModal from './DeliveryDateTimeModal';
 
 interface CartProps {
@@ -42,11 +42,14 @@ const Cart: React.FC<CartProps> = ({
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = React.useState(false);
   const [deliveryAmount, setDeliveryAmount] = React.useState<number>(0);
+  const [postcardAmount, setPostcardAmount] = React.useState<number>(0);
   const [deliveryDate, setDeliveryDate] = React.useState<string>('');
   const [deliveryTime, setDeliveryTime] = React.useState<string>('');
   const [isDeliveryDateTimeOpen, setIsDeliveryDateTimeOpen] = React.useState(false);
   const [workTimeFrom, setWorkTimeFrom] = React.useState<string>('');
   const [workTimeTo, setWorkTimeTo] = React.useState<string>('');
+  const [addPostcard, setAddPostcard] = React.useState(false);
+  const [postcardText, setPostcardText] = React.useState('');
 
   const debouncedAddress = useDebounce(customAddress, 300);
 
@@ -111,6 +114,22 @@ const Cart: React.FC<CartProps> = ({
       });
   }, [webApp?.initData]);
 
+  // Fetch postcard amount for cart calculations
+  React.useEffect(() => {
+    const initData = webApp?.initData || '';
+    if (!initData) return;
+
+    fetchPostcardAmount(initData)
+      .then((value) => {
+        const parsed = parseFloat(String(value).replace(/[^\d]/g, '')) || 0;
+        setPostcardAmount(parsed);
+      })
+      .catch((error) => {
+        console.error('Failed to fetch postcard amount:', error);
+        setPostcardAmount(0);
+      });
+  }, [webApp?.initData]);
+
   // Fetch work time settings for delivery time picker
   React.useEffect(() => {
     const initData = webApp?.initData || '';
@@ -136,7 +155,8 @@ const Cart: React.FC<CartProps> = ({
   }, 0);
 
   const deliveryCost = deliveryMethod === 'delivery' && cartItems.length > 0 ? deliveryAmount : 0;
-  const totalPriceWithDelivery = totalPrice + deliveryCost;
+  const postcardCost = addPostcard && cartItems.length > 0 ? postcardAmount : 0;
+  const totalPriceWithDelivery = totalPrice + deliveryCost + postcardCost;
 
   const handleDecrease = (productId: number) => {
     onDecreaseQuantity(productId);
@@ -168,6 +188,13 @@ const Cart: React.FC<CartProps> = ({
     if (deliveryMethod === 'delivery' && (!deliveryDate || !deliveryTime)) {
       webApp?.HapticFeedback.notificationOccurred('error');
       webApp?.showAlert('Пожалуйста, выберите дату и время доставки');
+      return;
+    }
+
+    // Валидация текста открытки (если выбрана)
+    if (addPostcard && !postcardText.trim()) {
+      webApp?.HapticFeedback.notificationOccurred('error');
+      webApp?.showAlert('Пожалуйста, введите текст для открытки');
       return;
     }
 
@@ -263,6 +290,7 @@ const Cart: React.FC<CartProps> = ({
         delivery_address,
         delivery_date: delivery_type === 'COURIER' ? deliveryDate : undefined,
         delivery_time: delivery_type === 'COURIER' ? deliveryTime : undefined,
+        postcard_text: addPostcard ? postcardText.trim() : undefined,
         cart_items: cartItems.map(item => ({
           good_id: item.product.id,
           count: item.quantity,
@@ -294,6 +322,7 @@ const Cart: React.FC<CartProps> = ({
         address: delivery_address,
         deliveryDate: deliveryMethod === 'delivery' ? deliveryDate : null,
         deliveryTime: deliveryMethod === 'delivery' ? deliveryTime : null,
+        postcardText: addPostcard ? postcardText.trim() : null,
         timestamp: new Date().toISOString(),
       };
 
@@ -358,12 +387,59 @@ const Cart: React.FC<CartProps> = ({
                 <span className="text-base font-semibold text-black">{deliveryAmount} руб.</span>
               </div>
             )}
+            {addPostcard && (
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-base font-semibold text-black">Стоимость открытки</span>
+                <span className="text-base font-semibold text-black">{postcardAmount} руб.</span>
+              </div>
+            )}
             {/* Total Price */}
             <div className="flex justify-between items-center mb-6">
               <span className="text-base font-bold text-black">Итого:</span>
               <span className="text-base font-bold text-black">{totalPriceWithDelivery} руб.</span>
             </div>
           </>
+        )}
+
+        {/* Postcard option (before delivery method) */}
+        {cartItems.length > 0 && (
+          <div className="mb-6">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={addPostcard}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setAddPostcard(checked);
+                  if (!checked) {
+                    setPostcardText('');
+                  }
+                  webApp?.HapticFeedback.selectionChanged();
+                }}
+                className="w-5 h-5 accent-[#80D1C1]"
+              />
+              <span className="text-base font-bold leading-[1.174] text-black">
+                Добавить открытку
+              </span>
+            </label>
+
+            {addPostcard && (
+              <div className="mt-3">
+                <div className="w-full px-4 py-4 rounded-[15px] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.25)] bg-white">
+                  <label className="block">
+                    <div className="text-xs text-gray-500">Текст для открытки</div>
+                    <textarea
+                      value={postcardText}
+                      onChange={(e) => setPostcardText(e.target.value)}
+                      placeholder="Напишите текст для открытки"
+                      rows={3}
+                      className="w-full mt-2 text-base font-semibold leading-[1.174] text-black bg-transparent outline-none resize-none"
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Delivery Method */}

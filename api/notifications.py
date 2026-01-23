@@ -2,6 +2,7 @@
 Notifications module for sending order notifications via Telegram and email
 """
 import os
+import html
 import logging
 import smtplib
 from email.mime.text import MIMEText
@@ -76,6 +77,10 @@ async def send_order_notification_to_manager(order_data: dict) -> bool:
         
         # Build notification message
         schedule_line = f"📅 <b>Доставка к:</b> {delivery_schedule_text}\n" if delivery_schedule_text else ""
+        postcard_text_raw = (order_data.get('postcard_text') or '').strip()
+        postcard_block = ""
+        if postcard_text_raw:
+            postcard_block = f"\n💌 <b>Текст открытки:</b>\n{html.escape(postcard_text_raw)}\n"
         message = (
             f"🆕 <b>НОВЫЙ ЗАКАЗ #{order_data['id']}</b>\n\n"
             f"👤 <b>Клиент:</b>\n"
@@ -87,6 +92,7 @@ async def send_order_notification_to_manager(order_data: dict) -> bool:
             f"🚚 <b>Доставка:</b> {delivery_type_text}\n"
             f"📍 <b>Адрес:</b> {order_data['delivery_address']}\n"
             f"{schedule_line}\n"
+            f"{postcard_block}"
             f"🕐 <b>Время заказа:</b> {time_text}"
         )
         
@@ -203,6 +209,8 @@ async def send_order_notification_to_email(order_data: dict) -> bool:
         subject = f"Новый заказ #{order_data['id']} - FanFanTulpan"
 
         schedule_line = f"\nДОСТАВКА К: {delivery_schedule_text}" if delivery_schedule_text else ""
+        postcard_text_raw = (order_data.get('postcard_text') or '').strip()
+        postcard_line = f"\n\nОТКРЫТКА:\n{postcard_text_raw}" if postcard_text_raw else ""
         body = f"""
 НОВЫЙ ЗАКАЗ #{order_data['id']}
 
@@ -217,6 +225,7 @@ Username: {'@' + username if username != 'не указан' else 'не указ
 ДОСТАВКА: {delivery_type_text}
 АДРЕС: {order_data['delivery_address']}
 {schedule_line}
+{postcard_line}
 
 ВРЕМЯ ЗАКАЗА: {time_text}
 """
