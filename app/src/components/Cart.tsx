@@ -1,11 +1,11 @@
 import React from 'react';
 import AppHeader from './AppHeader';
 import CartItem from './CartItem';
-import { useTelegramWebApp } from '../hooks/useTelegramWebApp';
+import { useMaxWebApp } from '../hooks/useMaxWebApp';
 import { CartItemData } from '../App';
 import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 import { useDebounce } from '../hooks/useDebounce';
-import { createOrder, OrderRequest, fetchUserInfo, suggestAddress, AddressSuggestion, fetchDeliveryAmount, fetchPostcardAmount, fetchWorkTime } from '../api/client';
+import { createOrder, OrderRequest, fetchUserInfo, updateUserPhone, suggestAddress, AddressSuggestion, fetchDeliveryAmount, fetchPostcardAmount, fetchWorkTime } from '../api/client';
 import DeliveryDateTimeModal from './DeliveryDateTimeModal';
 
 interface CartProps {
@@ -35,7 +35,7 @@ const Cart: React.FC<CartProps> = ({
   onClearCart,
   onOpenMyOrders
 }) => {
-  const { webApp, user } = useTelegramWebApp();
+  const { webApp, user } = useMaxWebApp();
   const [customAddress, setCustomAddress] = React.useState('г Тюмень, ');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [suggestions, setSuggestions] = React.useState<AddressSuggestion[]>([]);
@@ -180,33 +180,33 @@ const Cart: React.FC<CartProps> = ({
     // Валидация адреса доставки
     if (deliveryMethod === 'delivery' && !customAddress.trim()) {
       webApp?.HapticFeedback.notificationOccurred('error');
-      webApp?.showAlert('Пожалуйста, введите адрес доставки');
+      window.alert('Пожалуйста, введите адрес доставки');
       return;
     }
 
     // Валидация даты/времени доставки для курьера
     if (deliveryMethod === 'delivery' && (!deliveryDate || !deliveryTime)) {
       webApp?.HapticFeedback.notificationOccurred('error');
-      webApp?.showAlert('Пожалуйста, выберите дату и время доставки');
+      window.alert('Пожалуйста, выберите дату и время доставки');
       return;
     }
 
     // Валидация текста открытки (если выбрана)
     if (addPostcard && !postcardText.trim()) {
       webApp?.HapticFeedback.notificationOccurred('error');
-      webApp?.showAlert('Пожалуйста, введите текст для открытки');
+      window.alert('Пожалуйста, введите текст для открытки');
       return;
     }
     if (addPostcard && postcardText.length > 300) {
       webApp?.HapticFeedback.notificationOccurred('error');
-      webApp?.showAlert('Текст для открытки не должен превышать 300 символов');
+      window.alert('Текст для открытки не должен превышать 300 символов');
       return;
     }
 
     // Проверяем наличие user
     if (!user) {
       webApp?.HapticFeedback.notificationOccurred('error');
-      webApp?.showAlert('Ошибка: не удалось получить данные пользователя');
+      window.alert('Ошибка: не удалось получить данные пользователя');
       return;
     }
 
@@ -223,63 +223,30 @@ const Cart: React.FC<CartProps> = ({
       // Если нет phone - запрашиваем телефон
       if (!userInfo.phone) {
         setIsSubmitting(false);
-        
-        // Показываем информационное сообщение
-        const shouldRequestContact = await new Promise<boolean>((resolve) => {
-          webApp?.showConfirm(
-            'Для оформления заказа нам нужен ваш номер телефона. Поделиться контактом?',
-            (confirmed) => resolve(confirmed)
-          );
-        });
 
-        if (!shouldRequestContact) {
-          webApp?.showAlert('Без контактных данных мы не сможем связаться с вами для оформления заказа');
+        const shouldRequest = window.confirm('Для оформления заказа нам нужен ваш номер телефона. Поделиться контактом?');
+        if (!shouldRequest) {
+          window.alert('Без контактных данных мы не сможем связаться с вами для оформления заказа');
           return;
         }
 
-        // Запрашиваем контакт пользователя через Telegram
         if (webApp?.requestContact) {
-          webApp.requestContact();
-          
-          // Показываем сообщение с инструкцией (БЕЗ колбэка)
-          webApp?.showAlert(
-            'Сейчас откроется чат с ботом. Пожалуйста, поделитесь своим контактом, нажав на кнопку.'
-          );
-          
-          // Запускаем проверку обновления данных на верхнем уровне
-          let attempts = 0;
-          const maxAttempts = 15; // 15 попыток * 1 секунду = 15 секунд
-          
-          const checkInterval = setInterval(async () => {
-            attempts++;
-            
-            try {
-              // Проверяем, сохранился ли телефон
-              const updatedUserInfo = await fetchUserInfo(initData);
-              
-              if (updatedUserInfo.phone) {
-                clearInterval(checkInterval);
-                // Haptic feedback перед показом сообщения
+          webApp.requestContact(async (result) => {
+            if (result.status === 'ok' && result.data?.phone_number) {
+              try {
+                await updateUserPhone(result.data.phone_number, initData);
                 webApp?.HapticFeedback.notificationOccurred('success');
-                // Показываем успешное сообщение на верхнем уровне
-                webApp?.showAlert(
-                  '✅ Номер телефона получен! Теперь нажмите "Заказать" еще раз для оформления заказа.'
-                );
-              } else if (attempts >= maxAttempts) {
-                clearInterval(checkInterval);
-                webApp?.showAlert(
-                  'Не удалось получить номер телефона. Пожалуйста, убедитесь, что вы поделились своим контактом в чате с ботом, затем нажмите "Заказать" еще раз.'
-                );
+                window.alert('Номер телефона получен! Нажмите "Заказать" ещё раз.');
+              } catch (e) {
+                console.error('Failed to save phone:', e);
+                window.alert('Не удалось сохранить номер телефона.');
               }
-            } catch (error) {
-              console.error('Failed to check updated user info:', error);
-              if (attempts >= maxAttempts) {
-                clearInterval(checkInterval);
-              }
+            } else {
+              window.alert('Не удалось получить номер телефона.');
             }
-          }, 1000); // Проверяем каждую секунду
+          });
         } else {
-          webApp?.showAlert('Ваш Telegram не поддерживает запрос контакта. Обновите приложение.');
+          window.alert('Ваше приложение не поддерживает запрос контакта.');
         }
         return;
       }
@@ -307,50 +274,17 @@ const Cart: React.FC<CartProps> = ({
 
       console.log('Order created successfully:', createdOrder);
 
-      // Отправляем данные боту для уведомления (опционально, для обратной совместимости)
-      const botData = {
-        order_id: createdOrder.id,
-        user: {
-          id: user.id,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          username: user.username,
-        },
-        items: cartItems.map(item => ({
-          id: item.product.id,
-          title: item.product.title,
-          price: parseFloat(item.product.price.replace(/[^\d]/g, '')),
-          quantity: item.quantity,
-        })),
-          totalPrice: totalPriceWithDelivery,
-        deliveryMethod: deliveryMethod === 'pickup' ? 'Самовывоз' : 'Курьером',
-        address: delivery_address,
-        deliveryDate: deliveryMethod === 'delivery' ? deliveryDate : null,
-        deliveryTime: deliveryMethod === 'delivery' ? deliveryTime : null,
-        postcardText: addPostcard ? postcardText.trim() : null,
-        timestamp: new Date().toISOString(),
-      };
-
-      if (webApp) {
-        webApp.sendData(JSON.stringify(botData));
+      const goToOrders = window.confirm('Заказ успешно оформлен!\n\nИнформация о заказе в разделе Мои заказы. Перейти?');
+      if (goToOrders) {
+        onOpenMyOrders();
       }
-
-      // Показываем сообщение об успехе с предложением перейти в "Мои заказы"
-      webApp?.showConfirm(
-        'Заказ успешно оформлен!\n\nИнформация о заказе в разделе Мои заказы. Перейти?',
-        (confirmed) => {
-          if (confirmed) {
-            onOpenMyOrders();
-          }
-        }
-      );
 
       // Очищаем корзину после успешной покупки
       onClearCart();
     } catch (error) {
       console.error('Failed to create order:', error);
       webApp?.HapticFeedback.notificationOccurred('error');
-      webApp?.showAlert(`Ошибка при создании заказа: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+      window.alert(`Ошибка при создании заказа: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
     } finally {
       setIsSubmitting(false);
     }

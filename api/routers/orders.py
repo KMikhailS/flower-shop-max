@@ -4,7 +4,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 
 from dependencies import verify_admin_mode
-from auth import verify_telegram_init_data
+from auth import verify_init_data
 from models import OrderRequest, OrderDTO, CartItemDTO, OrdersPageDTO
 from database import (
     create_order,
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 @router.post("", response_model=OrderDTO)
 async def create_order_endpoint(
     order: OrderRequest,
-    user_id: int = Depends(verify_telegram_init_data)
+    user_id: int = Depends(verify_init_data)
 ):
     """
     Create a new order
@@ -212,7 +212,7 @@ async def update_order_endpoint(
 @router.get("/my", response_model=list[OrderDTO])
 async def get_my_orders_endpoint(
     statuses: Optional[str] = Query(None, description="Filter by statuses (comma-separated)"),
-    user_id: int = Depends(verify_telegram_init_data)
+    user_id: int = Depends(verify_init_data)
 ):
     """
     Get orders for current user

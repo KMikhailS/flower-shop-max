@@ -16,7 +16,7 @@ import MyOrders from './components/MyOrders';
 import AdminOrders from './components/AdminOrders';
 import AdminProductCard from './components/AdminProductCard';
 import AdminPromoBannerCard from './components/AdminPromoBannerCard';
-import { useTelegramWebApp } from './hooks/useTelegramWebApp';
+import { useMaxWebApp } from './hooks/useMaxWebApp';
 import { useCartPersistence } from './hooks/useCartPersistence';
 import { fetchUserInfo, UserInfo, createGoodCard, fetchGoods, fetchAllGoods, GoodDTO, addGoodImages, updateGoodCard, deleteGood, blockGood, activateGood, fetchPromoBanners, fetchAllPromoBanners, PromoBannerDTO, createPromoBanner, deletePromoBanner, blockPromoBanner, activatePromoBanner, updatePromoBannerLink, fetchSupportChatId } from './api/client';
 
@@ -26,8 +26,8 @@ export interface CartItemData {
 }
 
 function App() {
-  const { webApp } = useTelegramWebApp();
-  const { saveCart, loadCart, clearCart } = useCartPersistence(webApp);
+  const { webApp } = useMaxWebApp();
+  const { saveCart, loadCart, clearCart } = useCartPersistence(webApp?.initData || '');
 
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -236,30 +236,30 @@ function App() {
     }
 
     if (/^https?:\/\//.test(normalized)) {
-      return { url: normalized, preferTelegram: true };
+      return { url: normalized, preferMax: true };
     }
 
     if (normalized.startsWith('@')) {
-      return { url: `https://t.me/${normalized.slice(1)}`, preferTelegram: true };
+      return { url: `https://max.ru/${normalized.slice(1)}`, preferMax: true };
     }
 
     if (/^-?\d+$/.test(normalized)) {
       if (normalized.startsWith('-100') && normalized.length > 4) {
-        return { url: `https://t.me/c/${normalized.slice(4)}/1`, preferTelegram: true };
+        return { url: `https://max.ru/c/${normalized.slice(4)}/1`, preferMax: true };
       }
-      return { url: `tg://user?id=${normalized}`, preferTelegram: false };
+      return null;
     }
 
     return null;
   };
 
-  const openSupportLink = (url: string, preferTelegram: boolean) => {
-    if (preferTelegram && webApp?.openTelegramLink) {
+  const openSupportLink = (url: string, preferMax: boolean) => {
+    if (preferMax && webApp?.openMaxLink) {
       try {
-        webApp.openTelegramLink(url);
+        webApp.openMaxLink(url);
         return true;
       } catch (error) {
-        console.warn('openTelegramLink failed:', error);
+        console.warn('openMaxLink failed:', error);
       }
     }
 
@@ -291,30 +291,28 @@ function App() {
     try {
       const supportChatId = await fetchSupportChatId(webApp.initData);
       if (!supportChatId) {
-        webApp?.showAlert?.('Чат поддержки не настроен');
+        window.alert('Чат поддержки не настроен');
         return;
       }
 
       const chatLink = buildSupportChatLink(supportChatId);
       if (!chatLink) {
-        webApp?.showAlert?.('Неверный формат ID чата поддержки');
+        window.alert('Неверный формат ID чата поддержки');
         return;
       }
 
-      const opened = openSupportLink(chatLink.url, chatLink.preferTelegram);
+      const opened = openSupportLink(chatLink.url, chatLink.preferMax);
       if (!opened) {
-        webApp?.showAlert?.('Не удалось открыть чат поддержки');
+        window.alert('Не удалось открыть чат поддержки');
         return;
       }
       setIsMenuOpen(false);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes('404')) {
-        webApp?.showAlert?.('Чат поддержки не настроен');
-      } else if (webApp?.showAlert) {
-        webApp.showAlert('Не удалось открыть чат поддержки');
+        window.alert('Чат поддержки не настроен');
       } else {
-        alert('Не удалось открыть чат поддержки');
+        window.alert('Не удалось открыть чат поддержки');
       }
     }
   };
@@ -392,66 +390,38 @@ function App() {
 
   const handleDeleteProduct = async () => {
     if (!webApp || !webApp.initData || !editingProduct) {
-      alert('Ошибка: недоступен Telegram WebApp или товар не выбран');
+      window.alert('Ошибка: приложение недоступно или товар не выбран');
       return;
     }
 
-    const confirmMessage = `Удалить товар "${editingProduct.title}"?`;
+    const confirmed = window.confirm(`Удалить товар "${editingProduct.title}"?`);
+    if (!confirmed) return;
 
-    const handleConfirmedDelete = async () => {
-      try {
-        await deleteGood(editingProduct.id, webApp.initData);
-
-        const onSuccess = () => {
-          setIsAdminCardOpen(false);
-          setEditingProduct(null);
-          loadProducts();
-        };
-
-        if (webApp?.showAlert) {
-          webApp.showAlert('Товар успешно удалён', onSuccess);
-        } else {
-          alert('Товар успешно удалён');
-          onSuccess();
-        }
-      } catch (error) {
-        console.error('Failed to delete good:', error);
-        if (webApp?.showAlert) {
-          webApp.showAlert('Ошибка при удалении товара');
-        } else {
-          alert('Ошибка при удалении товара');
-        }
-      }
-    };
-
-    if (webApp?.showConfirm) {
-      webApp.showConfirm(confirmMessage, (confirmed) => {
-        if (!confirmed) return;
-        handleConfirmedDelete();
-      });
-      return;
+    try {
+      await deleteGood(editingProduct.id, webApp.initData);
+      window.alert('Товар успешно удалён');
+      setIsAdminCardOpen(false);
+      setEditingProduct(null);
+      loadProducts();
+    } catch (error) {
+      console.error('Failed to delete good:', error);
+      window.alert('Ошибка при удалении товара');
     }
-
-    const confirmDelete = window.confirm(confirmMessage);
-    if (!confirmDelete) return;
-    await handleConfirmedDelete();
   };
 
   const handleToggleBlockProduct = async () => {
     if (!webApp || !webApp.initData || !editingProduct) {
-      alert('Ошибка: недоступен Telegram WebApp или товар не выбран');
+      window.alert('Ошибка: приложение недоступно или товар не выбран');
       return;
     }
 
     try {
       if (editingProduct.status === 'BLOCKED') {
-        // Активируем товар
         await activateGood(editingProduct.id, webApp.initData);
-        alert('Товар успешно активирован');
+        window.alert('Товар успешно активирован');
       } else {
-        // Блокируем товар
         await blockGood(editingProduct.id, webApp.initData);
-        alert('Товар успешно заблокирован');
+        window.alert('Товар успешно заблокирован');
       }
       setIsAdminCardOpen(false);
       setEditingProduct(null);
@@ -550,31 +520,28 @@ function App() {
 
   const handleDeleteBanner = async () => {
     if (!webApp || !webApp.initData || !editingBanner) {
-      webApp?.showAlert?.('Ошибка: недоступен Telegram WebApp или баннер не выбран');
+      window.alert('Ошибка: приложение недоступно или баннер не выбран');
       return;
     }
 
-    // Use Telegram WebApp native confirm dialog
-    webApp.showConfirm('Удалить промо-баннер?', async (confirmed) => {
-      if (!confirmed) return;
+    const confirmed = window.confirm('Удалить промо-баннер?');
+    if (!confirmed) return;
 
-      try {
-        await deletePromoBanner(editingBanner.id, webApp.initData);
-        webApp.showAlert('Баннер успешно удалён', () => {
-          setIsAdminBannerCardOpen(false);
-          setEditingBanner(null);
-          loadPromoBanners();
-        });
-      } catch (error) {
-        console.error('Failed to delete banner:', error);
-        webApp.showAlert(`Ошибка при удалении баннера:\n${error instanceof Error ? error.message : String(error)}`);
-      }
-    });
+    try {
+      await deletePromoBanner(editingBanner.id, webApp.initData);
+      window.alert('Баннер успешно удалён');
+      setIsAdminBannerCardOpen(false);
+      setEditingBanner(null);
+      loadPromoBanners();
+    } catch (error) {
+      console.error('Failed to delete banner:', error);
+      window.alert(`Ошибка при удалении баннера:\n${error instanceof Error ? error.message : String(error)}`);
+    }
   };
 
   const handleToggleBlockBanner = async () => {
     if (!webApp || !webApp.initData || !editingBanner) {
-      alert('Ошибка: недоступен Telegram WebApp или баннер не выбран');
+      alert('Ошибка: приложение недоступно или баннер не выбран');
       return;
     }
 
@@ -599,7 +566,7 @@ function App() {
 
   const handleSaveBanner = async (link: number | null) => {
     if (!webApp || !webApp.initData || !editingBanner) {
-      alert('Ошибка: недоступен Telegram WebApp или баннер не выбран');
+      alert('Ошибка: приложение недоступно или баннер не выбран');
       return;
     }
 
@@ -673,7 +640,7 @@ function App() {
     sort_order?: number;
   }) => {
     if (!webApp || !webApp.initData) {
-      alert('Ошибка: недоступен Telegram WebApp');
+      alert('Ошибка: приложение недоступно');
       return;
     }
 
@@ -736,11 +703,20 @@ function App() {
   useEffect(() => {
     if (!webApp) return;
 
-    loadCart().then((savedCart) => {
-      if (savedCart && savedCart.cartItems) {
-        setCartItems(savedCart.cartItems);
-        setSelectedAddress(savedCart.selectedAddress);
-        setCartDeliveryMethod(savedCart.deliveryMethod);
+    loadCart().then((serverItems) => {
+      if (serverItems && serverItems.length > 0) {
+        setCartItems(serverItems.map(item => ({
+          product: {
+            id: item.good_id,
+            image: item.image_url || '/images/placeholder.png',
+            images: item.image_url ? [item.image_url] : [],
+            alt: item.name,
+            title: item.name,
+            price: `${item.price} руб.`,
+            description: '',
+          },
+          quantity: item.count
+        })));
       }
     });
   }, [webApp, loadCart]);
@@ -808,17 +784,12 @@ function App() {
   // Автосохранение корзины при изменении состояния
   useEffect(() => {
     if (cartItems.length === 0) {
-      clearCart(); // Очищаем storage при пустой корзине
+      clearCart();
       return;
     }
 
-    saveCart({
-      cartItems,
-      deliveryMethod: cartDeliveryMethod,
-      selectedAddress: selectedAddress,
-      timestamp: new Date().toISOString(),
-    });
-  }, [cartItems, cartDeliveryMethod, selectedAddress, saveCart, clearCart]);
+    saveCart(cartItems.map(item => ({ good_id: item.product.id, count: item.quantity })));
+  }, [cartItems, saveCart, clearCart]);
 
   // Управление BackButton Telegram
   useEffect(() => {
@@ -988,6 +959,7 @@ function App() {
           editingProduct={editingProduct || undefined}
           onDelete={editingProduct ? handleDeleteProduct : undefined}
           onBlock={editingProduct ? handleToggleBlockProduct : undefined}
+          initData={webApp?.initData || ''}
         />
       )}
       {isAdminBannerCardOpen && editingBanner && (

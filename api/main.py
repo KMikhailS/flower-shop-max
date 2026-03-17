@@ -1,12 +1,9 @@
 import asyncio
 import logging
 import os
+import httpx
 from dotenv import load_dotenv
 import uvicorn
-
-from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
-from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, FSInputFile
 
 from database import init_db, add_or_update_user, get_user, update_user_mode
 from fastapi_app import app as fastapi_app
@@ -21,150 +18,233 @@ logger = logging.getLogger(__name__)
 # Bot token from environment
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 APP_URL = os.getenv("APP_URL")
-
-# Create bot and dispatcher
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
+MAX_API_BASE = "https://platform-api.max.ru"
 
 
-@dp.message(Command("start"))
-async def start_handler(message: types.Message):
-    """Handle /start command - show Mini App button"""
+class MaxBotClient:
+    """HTTP client for MAX Bot API"""
 
-    # Save or update user in database with username
-    await add_or_update_user(
-        user_id=message.from_user.id,
-        username=message.from_user.username
-    )
+    def __init__(self, token: str):
+        self.token = token
+        self.base_url = MAX_API_BASE
+        self.headers = {"Authorization": token}
 
-    # Create inline keyboard with Mini App button
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="🌸 Открыть магазин",
-                    web_app=WebAppInfo(url=APP_URL)
+    async def send_message(self, chat_id: int, text: str,
+                           attachments: list = None, format: str = None):
+        """Send message to chat"""
+        chat_id = int(chat_id)
+        async with httpx.AsyncClient() as client:
+            body = {"text": text}
+            if attachments:
+                body["attachments"] = attachments
+            if format:
+                body["format"] = format
+            resp = await client.post(
+                f"{self.base_url}/messages?chat_id={chat_id}",
+                headers=self.headers,
+                json=body
+            )
+            resp.raise_for_status()
+            return resp.json()
+
+    async def send_message_with_mini_app_button(self, chat_id: int, text: str,
+                                                 button_text: str,
+                                                 extra_attachments: list = None):
+        """Send message with inline button that opens mini app"""
+        keyboard_attachment = {
+            "type": "inline_keyboard",
+            "payload": {
+                "buttons": [[
+                    {
+                        "type": "open_app",
+                        "text": button_text
+                    }
+                ]]
+            }
+        }
+        attachments = []
+        if extra_attachments:
+            attachments.extend(extra_attachments)
+        attachments.append(keyboard_attachment)
+        return await self.send_message(chat_id, text, attachments=attachments)
+
+    async def send_callback_answer(self, callback_id: str, message: str = None):
+        """Answer a callback query"""
+        async with httpx.AsyncClient() as client:
+            body = {"callback_id": callback_id}
+            if message:
+                body["message"] = {"text": message}
+            resp = await client.post(
+                f"{self.base_url}/answers",
+                headers=self.headers,
+                json=body
+            )
+            resp.raise_for_status()
+            return resp.json()
+
+    async def upload_photo(self, file_path: str) -> str:
+        """Upload photo via POST /uploads and return the upload token"""
+        async with httpx.AsyncClient() as client:
+            with open(file_path, "rb") as f:
+                resp = await client.post(
+                    f"{self.base_url}/uploads",
+                    headers=self.headers,
+                    files={"file": (os.path.basename(file_path), f, "image/jpeg")}
                 )
-            ]
-        ]
+            resp.raise_for_status()
+            return resp.json()["token"]
+
+    async def get_updates(self, marker: int = None, types: list = None):
+        """Get updates via long polling"""
+        async with httpx.AsyncClient(timeout=35.0) as client:
+            params = {}
+            if marker is not None:
+                params["marker"] = marker
+            if types:
+                params["types"] = ",".join(types)
+            resp = await client.get(
+                f"{self.base_url}/updates",
+                headers=self.headers,
+                params=params
+            )
+            resp.raise_for_status()
+            return resp.json()
+
+
+# --- Handlers ---
+
+async def handle_bot_started(bot: MaxBotClient, update: dict):
+    """Handle bot_started event — equivalent of /start in Telegram"""
+    user = update.get("user", {})
+    chat_id = update.get("chat_id")
+    user_id = user.get("user_id")
+    username = user.get("username")
+
+    # Save user to database
+    await add_or_update_user(user_id=user_id, username=username)
+
+    caption = (
+        "Цветы онлайн — это просто.\n"
+        "Fan Fan Tulpan в MAX:\n"
+        "выбрал букет, оформил доставку, подарил эмоции!!!\n\n"
+        "Жми на кнопку и выбирай свежие цветы уже сейчас."
     )
 
-    # Get path to welcome image
-    image_path = os.path.join(os.path.dirname(__file__), "images", "fanfan-main.jpg")
-    photo = FSInputFile(image_path)
+    # Try to upload photo and send with image; fall back to text-only
+    photo_attachment = None
+    try:
+        image_path = os.path.join(os.path.dirname(__file__), "images", "fanfan-main.jpg")
+        token = await bot.upload_photo(image_path)
+        photo_attachment = [{"type": "image", "payload": {"token": token}}]
+    except (FileNotFoundError, httpx.HTTPError, KeyError) as e:
+        logger.warning(f"Photo upload failed, sending text-only: {e}")
 
-    caption = """Цветы онлайн  это просто.
-Fan Fan Tulpan в Telegram:
-выбрал букет, оформил доставку, подарил эмоции!!!
-
-Жми на кнопку и выбирай свежие цветы уже сейчас."""
-
-    await message.answer_photo(
-        photo=photo,
-        caption=caption,
-        reply_markup=keyboard
-    )
-
-
-@dp.message(Command("mode"))
-async def mode_handler(message: types.Message):
-    """Handle /mode command - allow ADMIN to switch modes"""
-
-    # Get user from database
-    user = await get_user(message.from_user.id)
-
-    # Check if user exists and has ADMIN role
-    if not user or user.get("role") != "ADMIN":
-        await message.answer("❌ Эта команда доступна только администраторам.")
-        return
-
-    # Create inline keyboard with mode selection buttons
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="🔧 Режим администратора",
-                    callback_data="mode_admin"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="👤 Режим клиента",
-                    callback_data="mode_user"
-                )
-            ]
-        ]
-    )
-
-    current_mode = user.get("mode", "USER")
-    mode_text = "администратора" if current_mode == "ADMIN" else "клиента"
-
-    await message.answer(
-        text=f"Текущий режим: {mode_text}\n\nВыберите режим работы:",
-        reply_markup=keyboard
+    await bot.send_message_with_mini_app_button(
+        chat_id=chat_id,
+        text=caption,
+        button_text="\U0001f338 Открыть магазин",
+        extra_attachments=photo_attachment
     )
 
 
-@dp.callback_query(lambda c: c.data and c.data.startswith("mode_"))
-async def mode_callback_handler(callback_query: CallbackQuery):
-    """Handle mode selection callback"""
+async def handle_message_created(bot: MaxBotClient, update: dict):
+    """Handle text messages — /mode command"""
+    message = update.get("message", {})
+    text = (message.get("body", {}).get("text") or "").strip()
+    sender = message.get("sender", {})
+    user_id = sender.get("user_id")
+    chat_id = message.get("recipient", {}).get("chat_id")
 
-    # Extract mode from callback_data (mode_admin or mode_user)
-    new_mode = "ADMIN" if callback_query.data == "mode_admin" else "USER"
+    if text == "/mode":
+        db_user = await get_user(user_id)
+        if not db_user or db_user.get("role") != "ADMIN":
+            await bot.send_message(int(chat_id), "Эта команда доступна только администраторам.")
+            return
 
-    # Update user mode in database
-    await update_user_mode(callback_query.from_user.id, new_mode)
+        current_mode = db_user.get("mode", "USER")
+        mode_text = "администратора" if current_mode == "ADMIN" else "клиента"
 
-    # Prepare confirmation message
-    mode_text = "администратора" if new_mode == "ADMIN" else "клиента"
+        attachments = [{
+            "type": "inline_keyboard",
+            "payload": {
+                "buttons": [
+                    [{"type": "callback", "text": "\U0001f527 Режим администратора", "payload": "mode_admin"}],
+                    [{"type": "callback", "text": "\U0001f464 Режим клиента", "payload": "mode_user"}]
+                ]
+            }
+        }]
+        await bot.send_message(
+            int(chat_id),
+            f"Текущий режим: {mode_text}\n\nВыберите режим работы:",
+            attachments=attachments
+        )
 
-    # Answer callback query and update message
-    await callback_query.answer(f"✅ Режим изменен на: {mode_text}")
-    await callback_query.message.edit_text(
-        text=f"✅ Режим успешно изменен на: {mode_text}"
-    )
+
+async def handle_message_callback(bot: MaxBotClient, update: dict):
+    """Handle inline button callbacks — mode switching"""
+    callback = update.get("callback", {})
+    payload = callback.get("payload", "")
+    callback_id = callback.get("callback_id")
+    user = update.get("user", {})
+    user_id = user.get("user_id")
+
+    if payload.startswith("mode_"):
+        # Check admin role before processing to prevent privilege escalation
+        db_user = await get_user(user_id)
+        if not db_user or db_user.get("role") != "ADMIN":
+            await bot.send_callback_answer(
+                callback_id, "Эта функция доступна только администраторам."
+            )
+            return
+
+        new_mode = "ADMIN" if payload == "mode_admin" else "USER"
+        await update_user_mode(user_id, new_mode)
+        mode_text = "администратора" if new_mode == "ADMIN" else "клиента"
+        await bot.send_callback_answer(
+            callback_id, f"Режим изменен на: {mode_text}"
+        )
 
 
-@dp.message(lambda message: message.contact is not None)
-async def contact_handler(message: types.Message):
-    """Handle contact sharing from Web App"""
-    
-    # Get contact from message
-    contact = message.contact
-    
-    # Check if contact is from the same user (not someone else's contact)
-    if contact.user_id != message.from_user.id:
-        await message.answer("❌ Пожалуйста, поделитесь своим контактом, а не чужим.")
-        return
-    
-    # Save phone number to database
-    phone_number = contact.phone_number
-    await add_or_update_user(
-        user_id=message.from_user.id,
-        username=message.from_user.username,
-        phone=phone_number
-    )
-    
-    logger.info(f"Contact received from user {message.from_user.id}: {phone_number}")
-    
-    # Send confirmation message
-    await message.answer(
-        "✅ Спасибо! Ваш номер телефона сохранен.\n\nТеперь вы можете продолжить оформление заказа в магазине."
-    )
+# --- Polling loop ---
+
+UPDATE_HANDLERS = {
+    "bot_started": handle_bot_started,
+    "message_callback": handle_message_callback,
+    "message_created": handle_message_created,
+}
 
 
 async def run_bot():
-    """Run Telegram bot with polling"""
-    logger.info("Starting Telegram bot...")
-
-    # Initialize database
+    """Run MAX bot with long polling"""
+    logger.info("Starting MAX bot...")
     await init_db()
 
-    # Delete webhook to use polling
-    await bot.delete_webhook(drop_pending_updates=True)
+    bot = MaxBotClient(token=BOT_TOKEN)
+    marker = None
 
-    # Start polling
-    await dp.start_polling(bot)
+    while True:
+        try:
+            data = await bot.get_updates(
+                marker=marker,
+                types=["bot_started", "message_created", "message_callback"]
+            )
+            updates = data.get("updates", [])
+            marker = data.get("marker", marker)
+
+            for update in updates:
+                update_type = update.get("update_type")
+                handler = UPDATE_HANDLERS.get(update_type)
+                if handler:
+                    try:
+                        await handler(bot, update)
+                    except Exception as e:
+                        logger.error(f"Error handling {update_type}: {e}", exc_info=True)
+
+        except httpx.TimeoutException:
+            continue  # normal for long polling
+        except Exception as e:
+            logger.error(f"Polling error: {e}", exc_info=True)
+            await asyncio.sleep(5)
 
 
 async def run_fastapi():
@@ -181,10 +261,8 @@ async def run_fastapi():
 
 
 async def main():
-    """Start both Telegram bot and FastAPI server"""
+    """Start both MAX bot and FastAPI server"""
     logger.info("Starting services...")
-
-    # Run both services concurrently
     await asyncio.gather(
         run_bot(),
         run_fastapi()

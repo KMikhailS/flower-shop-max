@@ -1,10 +1,10 @@
 from fastapi import Depends, HTTPException, status
 
-from auth import verify_telegram_init_data
+from auth import verify_init_data
 from database import get_user
 
 
-async def verify_admin_mode(user_id: int = Depends(verify_telegram_init_data)) -> int:
+async def verify_admin_mode(user_id: int = Depends(verify_init_data)) -> int:
     """
     Verify that the user has ADMIN role
 

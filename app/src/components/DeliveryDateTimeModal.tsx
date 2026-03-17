@@ -100,7 +100,7 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
   // Prevent Telegram mini app from being closed by vertical swipe while bottom sheet is open
   useEffect(() => {
     if (!isOpen) return;
-    const tg = window.Telegram?.WebApp;
+    const tg = window.WebApp;
     tg?.disableVerticalSwipes?.();
     return () => {
       tg?.enableVerticalSwipes?.();

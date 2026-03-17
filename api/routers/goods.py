@@ -5,7 +5,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 
 from dependencies import verify_admin_mode
-from auth import verify_telegram_init_data
+from auth import verify_init_data
 from models import GoodCardRequest, GoodDTO, ImageDTO, ImageReorderRequest
 from database import (
     create_good_card,
@@ -68,7 +68,7 @@ async def get_goods():
 
 
 @router.get("/all", response_model=list[GoodDTO])
-async def get_all_goods_endpoint(user_id: int = Depends(verify_telegram_init_data)):
+async def get_all_goods_endpoint(user_id: int = Depends(verify_init_data)):
     """
     Get all goods regardless of status
 

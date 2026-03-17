@@ -1,44 +1,112 @@
 import os
+import hmac
+import hashlib
+import json
+import time
 import logging
+from urllib.parse import parse_qs, unquote
 from fastapi import Header, HTTPException, status, Depends
-from aiogram.utils.web_app import safe_parse_webapp_init_data
 from database import get_user
 
 logger = logging.getLogger(__name__)
 
 
-async def verify_telegram_init_data(authorization: str = Header(...)) -> int:
+def _verify_max_init_data(init_data_str: str, bot_token: str) -> dict:
     """
-    Verify Telegram WebApp initData and extract user_id
+    Validate MAX mini app initData using HMAC-SHA256.
+
+    Args:
+        init_data_str: URL-encoded initData string from Authorization header
+        bot_token: Bot token from MAX platform
+
+    Returns:
+        dict: Parsed user data {id, first_name, last_name, username, ...}
+
+    Raises:
+        ValueError: If signature validation fails
+    """
+    # Parse URL-encoded string into key-value pairs
+    parsed = parse_qs(init_data_str, keep_blank_values=True)
+
+    # Extract hash
+    received_hash = parsed.pop("hash", [None])[0]
+    if not received_hash:
+        raise ValueError("Missing hash in initData")
+
+    # Build data check string: sort pairs alphabetically, join with \n
+    data_pairs = []
+    for key in sorted(parsed.keys()):
+        value = parsed[key][0]
+        data_pairs.append(f"{key}={value}")
+    data_check_string = "\n".join(data_pairs)
+
+    # Create secret key: HMAC-SHA256("WebAppData", bot_token)
+    secret_key = hmac.new(
+        key=b"WebAppData",
+        msg=bot_token.encode("utf-8"),
+        digestmod=hashlib.sha256
+    ).digest()
+
+    # Compute hash: HMAC-SHA256(secret_key, data_check_string)
+    computed_hash = hmac.new(
+        key=secret_key,
+        msg=data_check_string.encode("utf-8"),
+        digestmod=hashlib.sha256
+    ).hexdigest()
+
+    # Timing-safe comparison
+    if not hmac.compare_digest(computed_hash, received_hash):
+        raise ValueError("Invalid initData signature")
+
+    # Check auth_date expiry (reject if older than 3600 seconds)
+    auth_date_raw = parsed.get("auth_date", [None])[0]
+    if not auth_date_raw:
+        raise ValueError("Missing auth_date in initData")
+
+    try:
+        auth_date = int(auth_date_raw)
+    except (ValueError, TypeError):
+        raise ValueError("Invalid auth_date format")
+
+    if abs(int(time.time()) - auth_date) > 3600:
+        raise ValueError("initData expired")
+
+    # Parse user JSON from initData
+    user_raw = parsed.get("user", [None])[0]
+    if not user_raw:
+        raise ValueError("No user data in initData")
+
+    user = json.loads(unquote(user_raw))
+    return user
+
+
+async def verify_init_data(authorization: str = Header(...)) -> int:
+    """
+    Verify MAX WebApp initData and extract user_id.
 
     Args:
         authorization: Authorization header in format "tma <initData>"
 
     Returns:
-        int: Telegram user_id
+        int: User ID
 
     Raises:
         HTTPException: If authorization is invalid
     """
-    # Check authorization header format
     if not authorization or not authorization.startswith("tma "):
-        logger.warning("Invalid authorization header format")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authorization header"
+            detail="Unauthorized"
         )
 
-    # Extract initData from header
     init_data_str = authorization.replace("tma ", "", 1)
 
     if not init_data_str:
-        logger.warning("Empty initData")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Empty initData"
+            detail="Unauthorized"
         )
 
-    # Get bot token from environment
     bot_token = os.getenv("BOT_TOKEN")
     if not bot_token:
         logger.error("BOT_TOKEN not found in environment")
@@ -48,47 +116,30 @@ async def verify_telegram_init_data(authorization: str = Header(...)) -> int:
         )
 
     try:
-        # Validate initData signature using aiogram
-        # safe_parse_webapp_init_data returns WebAppInitData object
-        init_data = safe_parse_webapp_init_data(
-            token=bot_token,
-            init_data=init_data_str
-        )
-
-        # Extract user_id
-        if not init_data.user:
-            logger.warning("No user data in initData")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="No user data"
-            )
-
-        user_id = init_data.user.id
+        user = _verify_max_init_data(init_data_str, bot_token)
+        user_id = user["id"]
         logger.info(f"Successfully authenticated user {user_id}")
         return user_id
-
-    except ValueError as e:
-        logger.warning(f"Invalid initData signature: {e}")
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid initData signature"
+            detail="Unauthorized"
         )
 
 
-async def verify_admin_mode(user_id: int = Depends(verify_telegram_init_data)) -> int:
+async def verify_admin_mode(user_id: int = Depends(verify_init_data)) -> int:
     """
     Verify that user has ADMIN role
 
     Args:
-        user_id: Telegram user_id from verify_telegram_init_data dependency
+        user_id: User ID from verify_init_data dependency
 
     Returns:
-        int: Telegram user_id
+        int: User ID
 
     Raises:
         HTTPException: If user doesn't have ADMIN role
     """
-    # Get user from database
     user = await get_user(user_id)
 
     if not user:
@@ -98,7 +149,6 @@ async def verify_admin_mode(user_id: int = Depends(verify_telegram_init_data)) -
             detail="User not found"
         )
 
-    # Check if user has ADMIN role (not mode!)
     if user.get("role") != "ADMIN":
         logger.warning(f"User {user_id} attempted to access ADMIN endpoint with role={user.get('role')}")
         raise HTTPException(

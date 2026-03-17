@@ -1,7 +1,7 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from auth import verify_telegram_init_data, verify_admin_mode
+from auth import verify_init_data, verify_admin_mode
 from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest, SupportChatDTO, PaymentInfoTextDTO, DeliveryInfoTextDTO, DeliveryAmountDTO, PostcardAmountDTO, WorkTimeDTO
 from database import get_user, get_user_by_username, update_user_mode, update_user_role_and_mode, add_or_update_user, get_all_settings, upsert_setting, delete_setting, get_setting_by_type
 
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/me", response_model=UserInfoDTO)
-async def get_current_user(user_id: int = Depends(verify_telegram_init_data)):
+async def get_current_user(user_id: int = Depends(verify_init_data)):
     """
     Get current user information
 
@@ -41,7 +41,7 @@ async def get_current_user(user_id: int = Depends(verify_telegram_init_data)):
 
 
 @router.get("/support-chat-id", response_model=SupportChatDTO)
-async def get_support_chat_id(user_id: int = Depends(verify_telegram_init_data)):
+async def get_support_chat_id(user_id: int = Depends(verify_init_data)):
     """
     Get support chat id for feedback
 
@@ -60,7 +60,7 @@ async def get_support_chat_id(user_id: int = Depends(verify_telegram_init_data))
 
 
 @router.get("/payment-info-text", response_model=PaymentInfoTextDTO)
-async def get_payment_info_text(user_id: int = Depends(verify_telegram_init_data)):
+async def get_payment_info_text(user_id: int = Depends(verify_init_data)):
     """
     Get payment info text for PaymentInfo screen
 
@@ -77,7 +77,7 @@ async def get_payment_info_text(user_id: int = Depends(verify_telegram_init_data
 
 
 @router.get("/delivery-info-text", response_model=DeliveryInfoTextDTO)
-async def get_delivery_info_text(user_id: int = Depends(verify_telegram_init_data)):
+async def get_delivery_info_text(user_id: int = Depends(verify_init_data)):
     """
     Get delivery info text for DeliveryInfo screen
 
@@ -94,7 +94,7 @@ async def get_delivery_info_text(user_id: int = Depends(verify_telegram_init_dat
 
 
 @router.get("/delivery-amount", response_model=DeliveryAmountDTO)
-async def get_delivery_amount(user_id: int = Depends(verify_telegram_init_data)):
+async def get_delivery_amount(user_id: int = Depends(verify_init_data)):
     """
     Get delivery amount for cart calculations
 
@@ -111,7 +111,7 @@ async def get_delivery_amount(user_id: int = Depends(verify_telegram_init_data))
 
 
 @router.get("/postcard-amount", response_model=PostcardAmountDTO)
-async def get_postcard_amount(user_id: int = Depends(verify_telegram_init_data)):
+async def get_postcard_amount(user_id: int = Depends(verify_init_data)):
     """
     Get postcard amount for cart calculations
 
@@ -128,7 +128,7 @@ async def get_postcard_amount(user_id: int = Depends(verify_telegram_init_data))
 
 
 @router.get("/work-time", response_model=WorkTimeDTO)
-async def get_work_time(user_id: int = Depends(verify_telegram_init_data)):
+async def get_work_time(user_id: int = Depends(verify_init_data)):
     """
     Get shop work time hours for cart time picker
 
@@ -280,7 +280,7 @@ async def update_current_user_mode(
 @router.put("/me/phone", response_model=UserInfoDTO)
 async def update_current_user_phone(
     request: PhoneUpdateRequest,
-    user_id: int = Depends(verify_telegram_init_data)
+    user_id: int = Depends(verify_init_data)
 ):
     """
     Update current user phone number

@@ -1,25 +1,48 @@
 """
-Notifications module for sending order notifications via Telegram and email
+Notifications module for sending order notifications via MAX Bot API and email
 """
 import os
-import html
+import re
 import logging
 import smtplib
+import httpx
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from typing import Optional
-from aiogram import Bot
 
 from database import get_setting_by_type, get_user
 
 logger = logging.getLogger(__name__)
 
+MAX_API_BASE = "https://platform-api.max.ru"
+
+_MD_SPECIAL = re.compile(r'([_*\[\]()~`>#+\-=|{}.!\\])')
+
+
+def _escape_markdown(text: str) -> str:
+    """Escape Markdown special characters in user-supplied text"""
+    if not text:
+        return text
+    return _MD_SPECIAL.sub(r'\\\1', text)
+
+
+async def _send_max_message(bot_token: str, chat_id: str, text: str) -> bool:
+    """Send message via MAX Bot API"""
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{MAX_API_BASE}/messages?chat_id={chat_id}",
+            headers={"Authorization": bot_token},
+            json={"text": text, "format": "markdown"}
+        )
+        resp.raise_for_status()
+        return True
+
 
 async def send_order_notification_to_manager(order_data: dict) -> bool:
     """
-    Send order notification to manager's Telegram chat
-    
+    Send order notification to manager's chat via MAX Bot API
+
     Args:
         order_data: Dictionary containing order information with keys:
             - id: order ID
@@ -28,24 +51,28 @@ async def send_order_notification_to_manager(order_data: dict) -> bool:
             - delivery_type: delivery type (PICK_UP or COURIER)
             - delivery_address: delivery address
             - createstamp: order creation timestamp
-    
+
     Returns:
         bool: True if notification was sent successfully, False otherwise
     """
     try:
         # Get MANAGER_CHAT_ID from settings
         manager_setting = await get_setting_by_type('MANAGER_CHAT_ID')
-        
+
         if not manager_setting or not manager_setting.get('value'):
             logger.warning("MANAGER_CHAT_ID setting not found or empty. Skipping notification.")
             return False
-        
+
         manager_chat_id = manager_setting['value']
-        
+
         # Get user information
         user = await get_user(order_data['user_id'])
         username = (user.get('username') or 'не указан') if user else 'не указан'
         phone = (user.get('phone') or 'не указан') if user else 'не указан'
+
+        # Escape user-supplied values for Markdown
+        username_escaped = _escape_markdown(username)
+        phone_escaped = _escape_markdown(phone)
 
         # Format delivery type
         delivery_type_text = "Самовывоз" if order_data['delivery_type'] == 'PICK_UP' else "Курьером"
@@ -58,7 +85,7 @@ async def send_order_notification_to_manager(order_data: dict) -> bool:
                 delivery_schedule_text = scheduled_at.strftime("%d.%m.%Y %H:%M")
             except Exception:
                 delivery_schedule_text = str(order_data['delivery_date_time'])
-        
+
         def parse_amount(value: Optional[str]) -> int:
             digits = "".join(ch for ch in str(value or "") if ch.isdigit())
             return int(digits) if digits else 0
@@ -83,64 +110,58 @@ async def send_order_notification_to_manager(order_data: dict) -> bool:
 
         services_block = ""
         if services_lines:
-            services_block = "🧾 <b>Услуги:</b>\n" + "\n".join(services_lines) + "\n\n"
+            services_block = "🧾 **Услуги:**\n" + "\n".join(services_lines) + "\n\n"
 
         total_price = goods_total + delivery_cost + postcard_cost
-        
-        # Format order items
+
+        # Format order items (escape good_name)
         items_text = ""
         for idx, item in enumerate(order_data['cart_items'], 1):
             item_total = item['price'] * item['count']
-            items_text += f"{idx}. {item['good_name']} x{item['count']} - {item_total}₽\n"
-        
+            good_name = _escape_markdown(str(item.get('good_name', '')))
+            items_text += f"{idx}. {good_name} x{item['count']} - {item_total}₽\n"
+
         # Format creation timestamp
         try:
             created_at = datetime.fromisoformat(order_data['createstamp'])
             time_text = created_at.strftime("%d.%m.%Y %H:%M")
         except (ValueError, KeyError):
             time_text = "не указано"
-        
-        # Build notification message
-        schedule_line = f"📅 <b>Доставка к:</b> {delivery_schedule_text}\n" if delivery_schedule_text else ""
+
+        # Build notification message (Markdown formatting)
+        delivery_address = _escape_markdown(str(order_data.get('delivery_address') or ''))
+        schedule_line = f"📅 **Доставка к:** {delivery_schedule_text}\n" if delivery_schedule_text else ""
         postcard_block = ""
         if postcard_text_raw:
-            postcard_block = f"\n💌 <b>Текст открытки:</b>\n{html.escape(postcard_text_raw)}\n"
+            postcard_block = f"\n💌 **Текст открытки:**\n{_escape_markdown(postcard_text_raw)}\n"
         message = (
-            f"🆕 <b>НОВЫЙ ЗАКАЗ #{order_data['id']}</b>\n\n"
-            f"👤 <b>Клиент:</b>\n"
-            f"Username: {'@' + username if username != 'не указан' else 'не указан'}\n"
-            f"Номер телефона: {phone}\n\n"
-            f"📦 <b>Товары:</b>\n"
+            f"🆕 **НОВЫЙ ЗАКАЗ #{order_data['id']}**\n\n"
+            f"👤 **Клиент:**\n"
+            f"Username: {'@' + username_escaped if username != 'не указан' else 'не указан'}\n"
+            f"Номер телефона: {phone_escaped}\n\n"
+            f"📦 **Товары:**\n"
             f"{items_text}\n"
             f"{services_block}"
-            f"💰 <b>Итого: {total_price}₽</b>\n\n"
-            f"🚚 <b>Доставка:</b> {delivery_type_text}\n"
-            f"📍 <b>Адрес:</b> {order_data['delivery_address']}\n"
+            f"💰 **Итого: {total_price}₽**\n\n"
+            f"🚚 **Доставка:** {delivery_type_text}\n"
+            f"📍 **Адрес:** {delivery_address}\n"
             f"{schedule_line}\n"
             f"{postcard_block}"
-            f"🕐 <b>Время заказа:</b> {time_text}"
+            f"🕐 **Время заказа:** {time_text}"
         )
-        
-        # Get bot token and create bot instance
+
+        # Get bot token
         bot_token = os.getenv("BOT_TOKEN")
         if not bot_token:
             logger.error("BOT_TOKEN not found in environment variables")
             return False
         logger.info(f"Try sent order notification for order #{order_data['id']} to manager chat {manager_chat_id}")
-        # Send notification
-        bot = Bot(token=bot_token)
-        try:
-            await bot.send_message(
-                chat_id=manager_chat_id,
-                text=message,
-                parse_mode="HTML"
-            )
-            logger.info(f"Successfully sent order notification for order #{order_data['id']} to manager chat {manager_chat_id}")
-            return True
-        finally:
-            # Close bot session
-            await bot.session.close()
-            
+
+        # Send notification via MAX Bot API
+        await _send_max_message(bot_token, manager_chat_id, message)
+        logger.info(f"Successfully sent order notification for order #{order_data['id']} to manager chat {manager_chat_id}")
+        return True
+
     except Exception as e:
         logger.error(f"Failed to send order notification: {str(e)}", exc_info=True)
         return False
@@ -300,4 +321,3 @@ Username: {'@' + username if username != 'не указан' else 'не указ
     except Exception as e:
         logger.error(f"Failed to send email notification: {str(e)}", exc_info=True)
         return False
-

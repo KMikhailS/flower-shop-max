@@ -29,6 +29,11 @@ images
 .playwright-mcp
 pages
 CLAUDE.md
+BACK_MAX_MIGRATION.md
+FRONT_MAX_MIGRATION.md
 
+__pycache__
 tasks
-
+api/__pycache__
+.claude
+work

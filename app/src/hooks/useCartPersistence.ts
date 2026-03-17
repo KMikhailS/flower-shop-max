@@ -1,121 +1,63 @@
 import { useCallback } from 'react';
-import { CartState } from '../types/cart';
 
-const CART_STORAGE_KEY = 'fanfantulpan_cart';
-const CART_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 часа
-
-interface UseCartPersistenceReturn {
-  saveCart: (cartState: CartState) => void;
-  loadCart: () => Promise<CartState | null>;
-  clearCart: () => void;
+interface CartServerItem {
+  good_id: number;
+  count: number;
+  name: string;
+  price: number;
+  image_url: string | null;
 }
 
-export const useCartPersistence = (webApp: TelegramWebApp | null): UseCartPersistenceReturn => {
+interface UseCartPersistenceReturn {
+  saveCart: (items: { good_id: number; count: number }[]) => Promise<void>;
+  loadCart: () => Promise<CartServerItem[] | null>;
+  clearCart: () => Promise<void>;
+}
 
-  // Сохранение в CloudStorage или localStorage
-  const saveCart = useCallback((cartState: CartState) => {
-    const dataToSave = JSON.stringify(cartState);
+export const useCartPersistence = (initData: string): UseCartPersistenceReturn => {
 
-    // Пытаемся использовать CloudStorage
-    if (webApp?.CloudStorage) {
-      webApp.CloudStorage.setItem(CART_STORAGE_KEY, dataToSave, (error) => {
-        if (error) {
-          console.error('CloudStorage save error:', error);
-          // Fallback на localStorage
-          try {
-            localStorage.setItem(CART_STORAGE_KEY, dataToSave);
-          } catch (e) {
-            console.error('localStorage save error:', e);
-          }
-        }
-      });
-    } else {
-      // Fallback на localStorage
-      try {
-        localStorage.setItem(CART_STORAGE_KEY, dataToSave);
-      } catch (e) {
-        console.error('localStorage save error:', e);
-      }
-    }
-  }, [webApp]);
-
-  // Загрузка из CloudStorage или localStorage
-  const loadCart = useCallback((): Promise<CartState | null> => {
-    return new Promise((resolve) => {
-      // Пытаемся загрузить из CloudStorage
-      if (webApp?.CloudStorage) {
-        webApp.CloudStorage.getItem(CART_STORAGE_KEY, (error, value) => {
-          if (error || !value) {
-            // Fallback на localStorage
-            try {
-              const localData = localStorage.getItem(CART_STORAGE_KEY);
-              resolve(validateAndParseCart(localData));
-            } catch (e) {
-              console.error('localStorage load error:', e);
-              resolve(null);
-            }
-          } else {
-            resolve(validateAndParseCart(value));
-          }
-        });
-      } else {
-        // Fallback на localStorage
-        try {
-          const localData = localStorage.getItem(CART_STORAGE_KEY);
-          resolve(validateAndParseCart(localData));
-        } catch (e) {
-          console.error('localStorage load error:', e);
-          resolve(null);
-        }
-      }
-    });
-  }, [webApp]);
-
-  // Очистка корзины
-  const clearCart = useCallback(() => {
-    // Удаляем из CloudStorage
-    if (webApp?.CloudStorage) {
-      webApp.CloudStorage.removeItem(CART_STORAGE_KEY, (error) => {
-        if (error) {
-          console.error('CloudStorage clear error:', error);
-        }
-      });
-    }
-
-    // Удаляем из localStorage
+  const saveCart = useCallback(async (items: { good_id: number; count: number }[]) => {
+    if (!initData) return;
     try {
-      localStorage.removeItem(CART_STORAGE_KEY);
+      const response = await fetch('/api/cart', {
+        method: 'PUT',
+        headers: { 'Authorization': `tma ${initData}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items })
+      });
+      if (!response.ok) {
+        console.error('Cart save failed:', response.status);
+      }
     } catch (e) {
-      console.error('localStorage clear error:', e);
+      console.error('Cart save error:', e);
     }
-  }, [webApp]);
+  }, [initData]);
+
+  const loadCart = useCallback(async (): Promise<CartServerItem[] | null> => {
+    if (!initData) return null;
+    try {
+      const response = await fetch('/api/cart', {
+        headers: { 'Authorization': `tma ${initData}` }
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.items || [];
+    } catch (e) {
+      console.error('Cart load error:', e);
+      return null;
+    }
+  }, [initData]);
+
+  const clearCart = useCallback(async () => {
+    if (!initData) return;
+    try {
+      await fetch('/api/cart', {
+        method: 'DELETE',
+        headers: { 'Authorization': `tma ${initData}` }
+      });
+    } catch (e) {
+      console.error('Cart clear error:', e);
+    }
+  }, [initData]);
 
   return { saveCart, loadCart, clearCart };
 };
-
-// Валидация и парсинг данных корзины
-function validateAndParseCart(data: string | null): CartState | null {
-  if (!data) return null;
-
-  try {
-    const cartState: CartState = JSON.parse(data);
-
-    // Проверяем структуру данных
-    if (!cartState || typeof cartState !== 'object') {
-      return null;
-    }
-
-    // Проверяем актуальность данных (не старше 24 часов)
-    const timestamp = new Date(cartState.timestamp).getTime();
-    const now = Date.now();
-    if (now - timestamp > CART_MAX_AGE_MS) {
-      console.log('Cart data is too old, discarding');
-      return null;
-    }
-
-    return cartState;
-  } catch (e) {
-    console.error('Failed to parse cart data:', e);
-    return null;
-  }
-}

@@ -114,6 +114,16 @@ async def init_db():
                 FOREIGN KEY (good_id) REFERENCES goods(id)
             )
         """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS user_cart (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                good_id INTEGER NOT NULL,
+                count INTEGER NOT NULL DEFAULT 1,
+                FOREIGN KEY (good_id) REFERENCES goods(id),
+                UNIQUE(user_id, good_id)
+            )
+        """)
         await db.commit()
         logger.info("Database initialized successfully")
 
@@ -345,6 +355,18 @@ async def save_good_images(good_id: int, image_urls: list[str]) -> None:
             )
         await db.commit()
         logger.info(f"Saved {len(image_urls)} images for good_id={good_id}")
+
+
+async def get_good_by_id(good_id: int) -> Optional[dict]:
+    """Get a single good by ID"""
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            "SELECT * FROM goods WHERE id = ?",
+            (good_id,)
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
 
 
 async def get_goods_by_status(status: str = 'NEW') -> list[dict]:
@@ -1490,3 +1512,39 @@ async def delete_order(order_id: int) -> None:
         )
         await db.commit()
         logger.info(f"Deleted order with id={order_id}")
+
+
+async def get_user_cart(user_id: int) -> list[dict]:
+    """Get cart items for a user, joined with goods data"""
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            """SELECT uc.good_id, uc.count, g.name, g.price, gi.image_url
+               FROM user_cart uc
+               JOIN goods g ON uc.good_id = g.id
+               LEFT JOIN goods_images gi ON g.id = gi.good_id AND gi.display_order = 0
+               WHERE uc.user_id = ?""",
+            (user_id,)
+        )
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
+
+async def upsert_user_cart(user_id: int, items: list[dict]) -> None:
+    """Atomically replace the user's entire cart"""
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("BEGIN")
+        await db.execute("DELETE FROM user_cart WHERE user_id = ?", (user_id,))
+        for item in items:
+            await db.execute(
+                "INSERT INTO user_cart (user_id, good_id, count) VALUES (?, ?, ?)",
+                (user_id, item["good_id"], item["count"])
+            )
+        await db.commit()
+
+
+async def clear_user_cart(user_id: int) -> None:
+    """Remove all cart items for a user"""
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("DELETE FROM user_cart WHERE user_id = ?", (user_id,))
+        await db.commit()

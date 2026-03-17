@@ -17,9 +17,10 @@ interface AdminProductCardProps {
   editingProduct?: Product;
   onDelete?: () => void;
   onBlock?: () => void;
+  initData?: string;
 }
 
-const AdminProductCard: React.FC<AdminProductCardProps> = ({ onClose, onSave, editingProduct, onDelete, onBlock }) => {
+const AdminProductCard: React.FC<AdminProductCardProps> = ({ onClose, onSave, editingProduct, onDelete, onBlock, initData }) => {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [priceRub, setPriceRub] = useState('');
@@ -408,7 +409,6 @@ const AdminProductCard: React.FC<AdminProductCardProps> = ({ onClose, onSave, ed
     }
 
     try {
-      const initData = window.Telegram?.WebApp?.initData || '';
       if (!initData) {
         alert('Не удалось получить данные авторизации');
         return;
@@ -485,7 +485,6 @@ const AdminProductCard: React.FC<AdminProductCardProps> = ({ onClose, onSave, ed
 
       if (orderChanged) {
         try {
-          const initData = window.Telegram?.WebApp?.initData || '';
           if (!initData) {
             alert('Не удалось получить данные авторизации');
             return;

@@ -194,6 +194,27 @@ class OrdersPageDTO(BaseModel):
     total: int
 
 
+class CartItemModel(BaseModel):
+    good_id: int
+    count: int
+
+
+class CartRequest(BaseModel):
+    items: list[CartItemModel]
+
+
+class CartResponseItem(BaseModel):
+    good_id: int
+    count: int
+    name: str
+    price: int
+    image_url: Optional[str] = None
+
+
+class CartResponse(BaseModel):
+    items: list[CartResponseItem]
+
+
 class AddressSuggestionDTO(BaseModel):
     """Data transfer object for address suggestion from DaData"""
     value: str  # Full formatted address
