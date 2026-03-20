@@ -92,7 +92,6 @@ class MaxBotClient:
                 resp = await client.post(
                     f"{self.base_url}/uploads",
                     headers=self.headers,
-                    params={"type": "photo"},
                     files={"file": (os.path.basename(file_path), f, "image/jpeg")}
                 )
             if resp.status_code >= 400:
