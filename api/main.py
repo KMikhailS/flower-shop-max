@@ -61,7 +61,8 @@ class MaxBotClient:
                 "buttons": [[
                     {
                         "type": "open_app",
-                        "text": button_text
+                        "text": button_text,
+                        "webApp": APP_URL
                     }
                 ]]
             }
