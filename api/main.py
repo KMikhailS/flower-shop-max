@@ -138,24 +138,19 @@ async def handle_bot_started(bot: MaxBotClient, update: dict):
         "Цветы онлайн — это просто.\n"
         "Fan Fan Tulpan в MAX:\n"
         "выбрал букет, оформил доставку, подарил эмоции!!!\n\n"
-        "Жми на кнопку и выбирай свежие цветы уже сейчас."
+        "Нажмите кнопку «Старт» внизу, чтобы открыть магазин 🌸"
     )
 
     # Try to upload photo and send with image; fall back to text-only
-    photo_attachment = None
+    attachments = None
     try:
         image_path = os.path.join(os.path.dirname(__file__), "images", "fanfan-main.jpg")
         photo_url = await bot.upload_photo(image_path)
-        photo_attachment = [{"type": "image", "payload": {"url": photo_url}}]
+        attachments = [{"type": "image", "payload": {"url": photo_url}}]
     except (FileNotFoundError, httpx.HTTPError, KeyError) as e:
         logger.warning(f"Photo upload failed, sending text-only: {e}")
 
-    await bot.send_message_with_mini_app_button(
-        chat_id=chat_id,
-        text=caption,
-        button_text="\U0001f338 Открыть магазин",
-        extra_attachments=photo_attachment
-    )
+    await bot.send_message(chat_id, caption, attachments=attachments)
 
 
 async def handle_message_created(bot: MaxBotClient, update: dict):
