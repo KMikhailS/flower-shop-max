@@ -71,6 +71,7 @@ class MaxBotClient:
         if extra_attachments:
             attachments.extend(extra_attachments)
         attachments.append(keyboard_attachment)
+        logger.info(f"Sending message with attachments: {attachments}")
         return await self.send_message(chat_id, text, attachments=attachments)
 
     async def send_callback_answer(self, callback_id: str, message: str = None):
