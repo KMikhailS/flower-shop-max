@@ -44,6 +44,8 @@ class MaxBotClient:
                 headers=self.headers,
                 json=body
             )
+            if resp.status_code >= 400:
+                logger.error(f"MAX API error {resp.status_code}: {resp.text}")
             resp.raise_for_status()
             return resp.json()
 
