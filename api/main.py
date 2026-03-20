@@ -88,22 +88,33 @@ class MaxBotClient:
             resp.raise_for_status()
             return resp.json()
 
-    async def upload_photo(self, file_path: str) -> str:
-        """Upload photo via POST /uploads and return the upload token"""
+    async def upload_photo(self, file_path: str) -> dict:
+        """Upload photo: 1) get upload URL, 2) upload file, return photo info"""
         async with httpx.AsyncClient() as client:
+            # Step 1: get upload URL
+            resp = await client.post(
+                f"{self.base_url}/uploads",
+                headers=self.headers,
+                params={"type": "image"},
+            )
+            if resp.status_code >= 400:
+                logger.error(f"Get upload URL error {resp.status_code}: {resp.text}")
+            resp.raise_for_status()
+            upload_url = resp.json().get("url")
+            logger.info(f"Upload URL: {upload_url}")
+
+            # Step 2: upload file to that URL
             with open(file_path, "rb") as f:
-                resp = await client.post(
-                    f"{self.base_url}/uploads",
-                    headers=self.headers,
-                    params={"type": "image"},
+                resp2 = await client.post(
+                    upload_url,
                     files={"file": (os.path.basename(file_path), f, "image/jpeg")}
                 )
-            if resp.status_code >= 400:
-                logger.error(f"Upload error {resp.status_code}: {resp.text}")
-            resp.raise_for_status()
-            data = resp.json()
-            logger.info(f"Upload response: {data}")
-            return data.get("token") or data.get("url")
+            if resp2.status_code >= 400:
+                logger.error(f"File upload error {resp2.status_code}: {resp2.text}")
+            resp2.raise_for_status()
+            data = resp2.json()
+            logger.info(f"Photo upload response: {data}")
+            return data
 
     async def get_updates(self, marker: int = None, types: list = None):
         """Get updates via long polling"""
@@ -145,8 +156,8 @@ async def handle_bot_started(bot: MaxBotClient, update: dict):
     attachments = None
     try:
         image_path = os.path.join(os.path.dirname(__file__), "images", "fanfan-main.jpg")
-        photo_url = await bot.upload_photo(image_path)
-        attachments = [{"type": "image", "payload": {"url": photo_url}}]
+        photo_data = await bot.upload_photo(image_path)
+        attachments = [{"type": "image", "payload": photo_data}]
     except (FileNotFoundError, httpx.HTTPError, KeyError) as e:
         logger.warning(f"Photo upload failed, sending text-only: {e}")
 
