@@ -37,3 +37,5 @@ tasks
 api/__pycache__
 .claude
 work
+flower_shop.db
+flower_shop_seed.sql

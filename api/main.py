@@ -155,6 +155,12 @@ async def handle_message_created(bot: MaxBotClient, update: dict):
     user_id = sender.get("user_id")
     chat_id = message.get("recipient", {}).get("chat_id")
 
+    if text == "/start":
+        username = sender.get("username")
+        await add_or_update_user(user_id=user_id, username=username)
+        await handle_bot_started(bot, {"user": sender, "chat_id": chat_id})
+        return
+
     if text == "/mode":
         db_user = await get_user(user_id)
         if not db_user or db_user.get("role") != "ADMIN":
