@@ -20,6 +20,8 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 APP_URL = os.getenv("APP_URL")
 MAX_API_BASE = "https://platform-api.max.ru"
 
+logger.info(f"APP_URL={APP_URL}")
+
 
 class MaxBotClient:
     """HTTP client for MAX Bot API"""
@@ -92,6 +94,7 @@ class MaxBotClient:
                 resp = await client.post(
                     f"{self.base_url}/uploads",
                     headers=self.headers,
+                    params={"type": "image"},
                     files={"file": (os.path.basename(file_path), f, "image/jpeg")}
                 )
             if resp.status_code >= 400:
