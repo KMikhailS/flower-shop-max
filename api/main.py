@@ -59,7 +59,8 @@ class MaxBotClient:
                 "buttons": [[
                     {
                         "type": "open_app",
-                        "text": button_text
+                        "text": button_text,
+                        "webApp": APP_URL
                     }
                 ]]
             }
@@ -91,10 +92,15 @@ class MaxBotClient:
                 resp = await client.post(
                     f"{self.base_url}/uploads",
                     headers=self.headers,
+                    params={"type": "photo"},
                     files={"file": (os.path.basename(file_path), f, "image/jpeg")}
                 )
+            if resp.status_code >= 400:
+                logger.error(f"Upload error {resp.status_code}: {resp.text}")
             resp.raise_for_status()
-            return resp.json()["token"]
+            data = resp.json()
+            logger.info(f"Upload response: {data}")
+            return data["token"]
 
     async def get_updates(self, marker: int = None, types: list = None):
         """Get updates via long polling"""
