@@ -62,7 +62,7 @@ class MaxBotClient:
                     {
                         "type": "open_app",
                         "text": button_text,
-                        "webApp": APP_URL
+                        "webApp": {"url": APP_URL}
                     }
                 ]]
             }
@@ -102,7 +102,7 @@ class MaxBotClient:
             resp.raise_for_status()
             data = resp.json()
             logger.info(f"Upload response: {data}")
-            return data["token"]
+            return data.get("token") or data.get("url")
 
     async def get_updates(self, marker: int = None, types: list = None):
         """Get updates via long polling"""
@@ -144,8 +144,8 @@ async def handle_bot_started(bot: MaxBotClient, update: dict):
     photo_attachment = None
     try:
         image_path = os.path.join(os.path.dirname(__file__), "images", "fanfan-main.jpg")
-        token = await bot.upload_photo(image_path)
-        photo_attachment = [{"type": "image", "payload": {"token": token}}]
+        photo_url = await bot.upload_photo(image_path)
+        photo_attachment = [{"type": "image", "payload": {"url": photo_url}}]
     except (FileNotFoundError, httpx.HTTPError, KeyError) as e:
         logger.warning(f"Photo upload failed, sending text-only: {e}")
 
