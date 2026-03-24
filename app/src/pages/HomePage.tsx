@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import SearchBar from '../components/SearchBar';
@@ -19,7 +19,6 @@ export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState<string[]>(['all']);
   const [searchQuery, setSearchQuery] = useState('');
   const [isBottomButtonVisible, setIsBottomButtonVisible] = useState(false);
-  const productGridRef = useRef<HTMLDivElement>(null);
 
   const uniqueCategories = useMemo(() => {
     const categories = products
@@ -60,21 +59,21 @@ export default function HomePage() {
     setActiveCategory(['all']);
   }, [products]);
 
-  // Intersection Observer for BottomButton visibility
-  useEffect(() => {
+  // Callback ref with IntersectionObserver for BottomButton visibility
+  const productGridRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && entry.intersectionRatio >= 0.2) {
             setIsBottomButtonVisible(true);
+            observer.disconnect();
           }
         });
       },
       { threshold: 0.2 }
     );
-    const currentRef = productGridRef.current;
-    if (currentRef) observer.observe(currentRef);
-    return () => { if (currentRef) observer.unobserve(currentRef); };
+    observer.observe(node);
   }, []);
 
   const handleAddPromoBanner = () => {
