@@ -17,7 +17,6 @@ import {
 } from '../api/client';
 
 interface SettingsProps {
-  isOpen: boolean;
   onClose: () => void;
   onMenuClick: () => void;
   userMode?: string;
@@ -26,7 +25,6 @@ interface SettingsProps {
 }
 
 const Settings: React.FC<SettingsProps> = ({
-  isOpen,
   onMenuClick,
   userMode,
   initData,
@@ -73,24 +71,17 @@ const Settings: React.FC<SettingsProps> = ({
   const existingSettingTypesRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (isOpen) {
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden';
-    }
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
 
-    return () => {
-      // Restore body scroll when modal closes
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
-
-  // Load settings when component opens
+  // Load settings when component mounts
   useEffect(() => {
-    if (isOpen && initData) {
+    if (initData) {
       loadSettings();
       loadCategories();
     }
-  }, [isOpen, initData]);
+  }, [initData]);
 
   // Update local mode when prop changes
   useEffect(() => {
@@ -452,7 +443,6 @@ const Settings: React.FC<SettingsProps> = ({
     }
   };
 
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-white z-50 max-w-[402px] mx-auto flex flex-col">

@@ -3,21 +3,17 @@ import AppHeader from './AppHeader';
 import { fetchShopAddresses, ShopAddress, createShopAddress, updateShopAddress, deleteShopAddress } from '../api/client';
 
 interface StoreAddressesProps {
-  isOpen: boolean;
   onSelectAddress: (address: string) => void;
   onMenuClick: () => void;
   userMode?: string;
   initData?: string;
-  fromCart?: boolean;
 }
 
 const StoreAddresses: React.FC<StoreAddressesProps> = ({
-  isOpen,
   onSelectAddress,
   onMenuClick,
   userMode,
   initData,
-  fromCart = false
 }) => {
   const [addresses, setAddresses] = useState<ShopAddress[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,18 +43,11 @@ const StoreAddresses: React.FC<StoreAddressesProps> = ({
   };
 
   useEffect(() => {
-    if (isOpen) {
-      loadAddresses();
-    }
-  }, [isOpen]);
+    loadAddresses();
+  }, []);
 
   const handleAddressClick = (address: string) => {
-    // Если зашли из меню (fromCart=false), выбор адреса недоступен
-    if (!fromCart || isEditing) {
-      return;
-    }
-
-    // Если зашли из корзины (fromCart=true), выбираем адрес и возвращаемся в корзину
+    if (isEditing) return;
     onSelectAddress(address);
   };
 
@@ -128,7 +117,6 @@ const StoreAddresses: React.FC<StoreAddressesProps> = ({
     }
   };
 
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-white z-50 max-w-[402px] mx-auto">
@@ -211,9 +199,9 @@ const StoreAddresses: React.FC<StoreAddressesProps> = ({
               <div key={address.id} className="flex items-center justify-between gap-3">
                 <button
                   onClick={() => handleAddressClick(address.address)}
-                  disabled={!fromCart || isEditing || isSubmitting}
+                  disabled={isEditing || isSubmitting}
                   className={`flex-1 text-base font-semibold leading-[1.174] text-black text-left transition-opacity ${
-                    fromCart && !isEditing && !isSubmitting
+                    !isEditing && !isSubmitting
                       ? 'hover:opacity-70 cursor-pointer'
                       : 'cursor-default'
                   }`}

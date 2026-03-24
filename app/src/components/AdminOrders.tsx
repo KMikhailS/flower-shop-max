@@ -7,13 +7,11 @@ const ORDERS_PER_PAGE = 20;
 const ALL_STATUSES = ['NEW', 'PROCESSING', 'SENT', 'COMPLETED', 'CANCELLED'] as const;
 
 interface AdminOrdersProps {
-  isOpen: boolean;
   onMenuClick: () => void;
   initData?: string;
 }
 
 const AdminOrders: React.FC<AdminOrdersProps> = ({
-  isOpen,
   onMenuClick,
   initData
 }) => {
@@ -38,16 +36,9 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
   const [totalOrders, setTotalOrders] = useState(0);
 
   useEffect(() => {
-    if (isOpen) {
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden';
-    }
-
-    return () => {
-      // Restore body scroll when modal closes
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
 
   // Calculate date range based on period
   const getDateRange = useCallback((): { dateFrom?: string; dateTo?: string } => {
@@ -124,7 +115,7 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
 
   // Load goods once on mount
   useEffect(() => {
-    if (!isOpen || !initData) return;
+    if (!initData) return;
 
     const loadGoods = async () => {
       try {
@@ -136,11 +127,11 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
     };
 
     loadGoods();
-  }, [isOpen, initData]);
+  }, [initData]);
 
   // Load service amounts once when screen opens
   useEffect(() => {
-    if (!isOpen || !initData) return;
+    if (!initData) return;
 
     Promise.all([fetchDeliveryAmount(initData), fetchPostcardAmount(initData)])
       .then(([deliveryAmountValue, postcardAmountValue]) => {
@@ -154,12 +145,10 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
         setDeliveryAmount(0);
         setPostcardAmount(0);
       });
-  }, [isOpen, initData]);
+  }, [initData]);
 
   // Load orders when filters or page changes
   useEffect(() => {
-    if (!isOpen) return;
-
     if (!initData) {
       console.error('AdminOrders: initData is not available');
       setError('Ошибка авторизации. Перезапустите приложение.');
@@ -167,7 +156,7 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
     }
 
     loadOrders();
-  }, [isOpen, initData, loadOrders]);
+  }, [initData, loadOrders]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -308,7 +297,6 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
     }
   };
 
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-white z-50 max-w-[402px] mx-auto">

@@ -3,14 +3,12 @@ import AppHeader from './AppHeader';
 import { fetchPaymentInfoText, upsertSetting } from '../api/client';
 
 interface PaymentInfoProps {
-  isOpen: boolean;
   onClose: () => void;
   initData?: string;
   userMode?: string;
 }
 
 const PaymentInfo: React.FC<PaymentInfoProps> = ({
-  isOpen,
   onClose,
   initData,
   userMode
@@ -30,7 +28,6 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
   }, [paymentText]);
 
   useEffect(() => {
-    if (!isOpen) return;
     setIsEditing(false);
     setIsSaving(false);
     setError(null);
@@ -57,7 +54,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
     };
 
     loadText();
-  }, [isOpen, initData]);
+  }, [initData]);
 
   const isAdmin = userMode === 'ADMIN';
 
@@ -88,7 +85,6 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
     }
   };
 
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">

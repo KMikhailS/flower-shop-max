@@ -3,14 +3,12 @@ import AppHeader from './AppHeader';
 import { fetchDeliveryInfoText, upsertSetting } from '../api/client';
 
 interface DeliveryInfoProps {
-  isOpen: boolean;
   onClose: () => void;
   initData?: string;
   userMode?: string;
 }
 
 const DeliveryInfo: React.FC<DeliveryInfoProps> = ({
-  isOpen,
   onClose,
   initData,
   userMode
@@ -30,7 +28,6 @@ const DeliveryInfo: React.FC<DeliveryInfoProps> = ({
   }, [deliveryText]);
 
   useEffect(() => {
-    if (!isOpen) return;
     setIsEditing(false);
     setIsSaving(false);
     setError(null);
@@ -57,7 +54,7 @@ const DeliveryInfo: React.FC<DeliveryInfoProps> = ({
     };
 
     loadText();
-  }, [isOpen, initData]);
+  }, [initData]);
 
   const isAdmin = userMode === 'ADMIN';
 
@@ -87,8 +84,6 @@ const DeliveryInfo: React.FC<DeliveryInfoProps> = ({
       setIsSaving(false);
     }
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">

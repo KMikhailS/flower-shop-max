@@ -3,13 +3,11 @@ import AppHeader from './AppHeader';
 import { fetchMyOrders, OrderDTO, fetchAllGoods, GoodDTO, fetchDeliveryAmount, fetchPostcardAmount } from '../api/client';
 
 interface MyOrdersProps {
-  isOpen: boolean;
   onMenuClick: () => void;
   initData?: string;
 }
 
 const MyOrders: React.FC<MyOrdersProps> = ({
-  isOpen,
   onMenuClick,
   initData
 }) => {
@@ -22,20 +20,11 @@ const MyOrders: React.FC<MyOrdersProps> = ({
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
 
   useEffect(() => {
-    if (isOpen) {
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden';
-    }
-
-    return () => {
-      // Restore body scroll when modal closes
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
 
   useEffect(() => {
-    if (!isOpen) return;
-
     if (!initData) {
       console.error('MyOrders: initData is not available');
       setError('Ошибка авторизации. Перезапустите приложение.');
@@ -73,7 +62,7 @@ const MyOrders: React.FC<MyOrdersProps> = ({
     };
 
     loadData();
-  }, [isOpen, initData]);
+  }, [initData]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -129,7 +118,6 @@ const MyOrders: React.FC<MyOrdersProps> = ({
     }
   });
 
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-white z-50 max-w-[402px] mx-auto">
