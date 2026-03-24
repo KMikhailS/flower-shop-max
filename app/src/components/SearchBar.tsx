@@ -13,7 +13,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearchChange }) => {
         </svg>
         <input
           type="text"
-          placeholder="Поиск | version 20260324_1"
+          placeholder="Поиск"
           onChange={(e) => onSearchChange(e.target.value)}
           className="bg-transparent flex-1 outline-none font-inter text-base text-gray-medium placeholder:text-gray-medium"
         />
