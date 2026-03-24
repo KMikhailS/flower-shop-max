@@ -32,9 +32,17 @@ export default function AppLayout() {
   // BackButton integration
   useBackButton(webApp);
 
-  // Scroll to top on route change
+  // Scroll management: restore saved position for homepage, scroll to top for other pages
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (location.pathname === '/') {
+      const saved = sessionStorage.getItem('homeScrollY');
+      if (saved) {
+        window.scrollTo(0, parseInt(saved, 10));
+        sessionStorage.removeItem('homeScrollY');
+      }
+    } else {
+      window.scrollTo(0, 0);
+    }
   }, [location.pathname]);
 
   // Cart handlers

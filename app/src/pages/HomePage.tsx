@@ -102,7 +102,10 @@ export default function HomePage() {
   const handleBannerClick = (banner: PromoBannerDTO) => {
     if (!banner.link) return;
     const product = products.find(p => p.id === banner.link);
-    if (product) navigate(`/product/${product.id}`);
+    if (product) {
+      sessionStorage.setItem('homeScrollY', String(window.scrollY));
+      navigate(`/product/${product.id}`);
+    }
   };
 
   const handleEditBanner = (banner: PromoBannerDTO) => {
@@ -132,9 +135,15 @@ export default function HomePage() {
       <div ref={productGridRef}>
         <ProductGrid
           products={filteredProducts}
-          onProductClick={(product) => navigate(`/product/${product.id}`)}
+          onProductClick={(product) => {
+            sessionStorage.setItem('homeScrollY', String(window.scrollY));
+            navigate(`/product/${product.id}`);
+          }}
           isAdminMode={userInfo?.mode === 'ADMIN'}
-          onAddNewCard={() => navigate('/admin/product/new')}
+          onAddNewCard={() => {
+            sessionStorage.setItem('homeScrollY', String(window.scrollY));
+            navigate('/admin/product/new');
+          }}
         />
       </div>
       {isBottomButtonVisible && (
