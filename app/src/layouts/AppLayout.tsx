@@ -212,16 +212,12 @@ export default function AppLayout() {
   // Auto-save cart (skip until initial load completes to avoid clearing server data)
   useEffect(() => {
     if (!cartLoadedRef.current) return;
-    if (cartItems.length === 0) {
-      clearCart();
-      return;
-    }
     saveCart({
       items: cartItems.map(item => ({ good_id: item.product.id, count: item.quantity })),
       delivery_method: cartDeliveryMethod,
       selected_address: selectedAddress,
     });
-  }, [cartItems, cartDeliveryMethod, selectedAddress, saveCart, clearCart]);
+  }, [cartItems, cartDeliveryMethod, selectedAddress, saveCart]);
 
   // Support chat / feedback handler
   const buildSupportChatLink = (chatId: string) => {
