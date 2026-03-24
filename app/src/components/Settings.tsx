@@ -455,8 +455,8 @@ const Settings: React.FC<SettingsProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-white z-50 max-w-[402px] mx-auto">
-      <div className="h-full overflow-y-auto overflow-x-hidden">
+    <div className="fixed inset-0 bg-white z-50 max-w-[402px] mx-auto flex flex-col">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
         {/* Header */}
         <AppHeader
           title="FanFanTulpan"
@@ -927,7 +927,7 @@ const Settings: React.FC<SettingsProps> = ({
 
       {/* Fixed Save Button for notifications, delivery, categories tabs */}
       {!isLoading && activeTab !== 'users' && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
+        <div className="shrink-0 p-4 bg-white border-t border-gray-100">
           <button
             onClick={handleSave}
             disabled={isSaving}
