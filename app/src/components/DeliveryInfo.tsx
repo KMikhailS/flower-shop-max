@@ -22,7 +22,7 @@ const DeliveryInfo: React.FC<DeliveryInfoProps> = ({
 
   const paragraphs = useMemo(() => {
     return deliveryText
-      .split(/\r?\n/)
+      .split(/\\n|\r?\n/)
       .map(p => p.trim())
       .filter(Boolean);
   }, [deliveryText]);

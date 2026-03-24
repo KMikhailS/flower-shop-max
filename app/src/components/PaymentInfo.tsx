@@ -22,7 +22,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
 
   const paragraphs = useMemo(() => {
     return paymentText
-      .split(/\r?\n/)
+      .split(/\\n|\r?\n/)
       .map(p => p.trim())
       .filter(Boolean);
   }, [paymentText]);
