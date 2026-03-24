@@ -201,6 +201,8 @@ class CartItemModel(BaseModel):
 
 class CartRequest(BaseModel):
     items: list[CartItemModel]
+    delivery_method: Optional[str] = None
+    selected_address: Optional[str] = None
 
 
 class CartResponseItem(BaseModel):
@@ -213,6 +215,8 @@ class CartResponseItem(BaseModel):
 
 class CartResponse(BaseModel):
     items: list[CartResponseItem]
+    delivery_method: Optional[str] = None
+    selected_address: Optional[str] = None
 
 
 class AddressSuggestionDTO(BaseModel):

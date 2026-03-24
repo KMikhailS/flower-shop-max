@@ -124,6 +124,14 @@ async def init_db():
                 UNIQUE(user_id, good_id)
             )
         """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS user_cart_state (
+                user_id INTEGER PRIMARY KEY,
+                delivery_method TEXT DEFAULT 'pickup',
+                selected_address TEXT,
+                updated_at TIMESTAMP
+            )
+        """)
         await db.commit()
         logger.info("Database initialized successfully")
 
@@ -1544,7 +1552,36 @@ async def upsert_user_cart(user_id: int, items: list[dict]) -> None:
 
 
 async def clear_user_cart(user_id: int) -> None:
-    """Remove all cart items for a user"""
+    """Remove all cart items and cart state for a user"""
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("DELETE FROM user_cart WHERE user_id = ?", (user_id,))
+        await db.execute("DELETE FROM user_cart_state WHERE user_id = ?", (user_id,))
+        await db.commit()
+
+
+async def get_user_cart_state(user_id: int) -> Optional[dict]:
+    """Get cart state (delivery method, address) for a user"""
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            "SELECT delivery_method, selected_address FROM user_cart_state WHERE user_id = ?",
+            (user_id,)
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+
+
+async def upsert_user_cart_state(user_id: int, delivery_method: Optional[str], selected_address: Optional[str]) -> None:
+    """Create or update cart state for a user"""
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            """INSERT INTO user_cart_state (user_id, delivery_method, selected_address, updated_at)
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(user_id) DO UPDATE SET
+                   delivery_method = COALESCE(?, delivery_method),
+                   selected_address = COALESCE(?, selected_address),
+                   updated_at = ?""",
+            (user_id, delivery_method, selected_address, datetime.now(),
+             delivery_method, selected_address, datetime.now())
+        )
         await db.commit()

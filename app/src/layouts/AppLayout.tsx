@@ -160,9 +160,10 @@ export default function AppLayout() {
   // Restore cart on init
   useEffect(() => {
     if (!webApp) return;
-    loadCart().then((serverItems) => {
-      if (serverItems && serverItems.length > 0) {
-        setCartItems(serverItems.map(item => ({
+    loadCart().then((data) => {
+      if (!data) return;
+      if (data.items.length > 0) {
+        setCartItems(data.items.map(item => ({
           product: {
             id: item.good_id,
             image: item.image_url || '/images/placeholder.png',
@@ -174,6 +175,12 @@ export default function AppLayout() {
           },
           quantity: item.count
         })));
+      }
+      if (data.delivery_method) {
+        setCartDeliveryMethod(data.delivery_method as 'pickup' | 'delivery');
+      }
+      if (data.selected_address) {
+        setSelectedAddress(data.selected_address);
       }
     });
   }, [webApp, loadCart]);
@@ -206,8 +213,12 @@ export default function AppLayout() {
       clearCart();
       return;
     }
-    saveCart(cartItems.map(item => ({ good_id: item.product.id, count: item.quantity })));
-  }, [cartItems, saveCart, clearCart]);
+    saveCart({
+      items: cartItems.map(item => ({ good_id: item.product.id, count: item.quantity })),
+      delivery_method: cartDeliveryMethod,
+      selected_address: selectedAddress,
+    });
+  }, [cartItems, cartDeliveryMethod, selectedAddress, saveCart, clearCart]);
 
   // Support chat / feedback handler
   const buildSupportChatLink = (chatId: string) => {
