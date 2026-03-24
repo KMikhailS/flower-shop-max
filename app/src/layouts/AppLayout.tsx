@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import MobileMenu from '../components/MobileMenu';
 import { useMaxWebApp } from '../hooks/useMaxWebApp';
@@ -28,6 +28,7 @@ export default function AppLayout() {
   const [selectedAddress, setSelectedAddress] = useState('г. Тюмень ул. Пермякова, 62');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBottomButtonVisible, setIsBottomButtonVisible] = useState(false);
+  const cartLoadedRef = useRef(false);
 
   // BackButton integration
   useBackButton(webApp);
@@ -182,6 +183,7 @@ export default function AppLayout() {
       if (data.selected_address) {
         setSelectedAddress(data.selected_address);
       }
+      cartLoadedRef.current = true;
     });
   }, [webApp, loadCart]);
 
@@ -207,8 +209,9 @@ export default function AppLayout() {
     loadPromoBanners();
   }, [loadPromoBanners]);
 
-  // Auto-save cart
+  // Auto-save cart (skip until initial load completes to avoid clearing server data)
   useEffect(() => {
+    if (!cartLoadedRef.current) return;
     if (cartItems.length === 0) {
       clearCart();
       return;
