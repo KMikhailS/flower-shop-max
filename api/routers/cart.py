@@ -7,7 +7,7 @@ from database import get_user_cart, upsert_user_cart, clear_user_cart, get_good_
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/cart", tags=["cart"])
+router = APIRouter(prefix="/cart", tags=["cart"])
 
 
 @router.get("", response_model=CartResponse)
