@@ -198,9 +198,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onOpenCart, onAddToC
           </div>
 
           {/* Description */}
-          <p className="text-base font-normal leading-[1.174] text-black mb-4">
-            {product.description}
-          </p>
+          <div className="text-base font-normal leading-[1.174] text-black mb-4 space-y-3">
+            {product.description
+              .split(/\\n|\r?\n/)
+              .map(p => p.trim())
+              .filter(Boolean)
+              .map((p, idx) => (
+                <p key={idx}>{p}</p>
+              ))}
+          </div>
 
           {/* Product ID for ADMIN */}
           {userInfo?.mode === 'ADMIN' && (
