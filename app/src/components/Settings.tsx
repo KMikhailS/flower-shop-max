@@ -247,9 +247,20 @@ const Settings: React.FC<SettingsProps> = ({
     }
   };
 
-  const handleModeToggle = () => {
+  const handleModeToggle = async () => {
+    if (!initData) return;
     const newMode = currentMode === 'ADMIN' ? 'USER' : 'ADMIN';
     setCurrentMode(newMode);
+    try {
+      await updateUserMode(newMode, initData);
+      if (onModeChange) {
+        onModeChange();
+      }
+    } catch (err) {
+      console.error('Failed to update mode:', err);
+      setCurrentMode(currentMode);
+      setError('Не удалось сменить режим');
+    }
   };
 
   const handleSave = async () => {
@@ -262,16 +273,6 @@ const Settings: React.FC<SettingsProps> = ({
     setError(null);
 
     try {
-      // Update mode if changed
-      if (currentMode !== userMode) {
-        await updateUserMode(currentMode, initData);
-
-        // Notify parent to reload user info
-        if (onModeChange) {
-          onModeChange();
-        }
-      }
-
       // Save support chat ID (empty -> delete)
       const supportChatIdValue = supportChatId.trim();
       if (supportChatIdValue) {
@@ -484,7 +485,7 @@ const Settings: React.FC<SettingsProps> = ({
 
         {/* Settings Form */}
         {!isLoading && (
-          <div className="flex flex-col gap-6 px-6 mt-[25px] pb-6">
+          <div className={`flex flex-col gap-6 px-6 mt-[25px] ${activeTab !== 'users' ? 'pb-24' : 'pb-6'}`}>
             {/* Mode Toggle */}
             <div className="flex flex-col gap-3">
               <label className="text-base font-semibold text-black">
@@ -663,14 +664,6 @@ const Settings: React.FC<SettingsProps> = ({
                   />
                 </div>
 
-                {/* Save Button */}
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="w-full bg-teal text-white py-3 rounded-[30px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 mt-4"
-                >
-                  {isSaving ? 'Сохранение...' : 'Сохранить'}
-                </button>
               </>
             )}
 
@@ -739,13 +732,6 @@ const Settings: React.FC<SettingsProps> = ({
                   </div>
                 </div>
 
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="w-full bg-teal text-white py-3 rounded-[30px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 mt-4"
-                >
-                  {isSaving ? 'Сохранение...' : 'Сохранить'}
-                </button>
               </>
             )}
 
@@ -938,6 +924,19 @@ const Settings: React.FC<SettingsProps> = ({
           </div>
         )}
       </div>
+
+      {/* Fixed Save Button for notifications, delivery, categories tabs */}
+      {!isLoading && activeTab !== 'users' && (
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="w-full bg-teal text-white py-3 rounded-[30px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {isSaving ? 'Сохранение...' : 'Сохранить'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
