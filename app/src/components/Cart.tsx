@@ -11,6 +11,7 @@ import DeliveryDateTimeModal from './DeliveryDateTimeModal';
 interface CartProps {
   cartItems: CartItemData[];
   onOpenMenu: () => void;
+  onGoToCatalog: () => void;
   selectedAddress: string;
   onOpenStoreAddresses: () => void;
   deliveryMethod: 'pickup' | 'delivery';
@@ -25,6 +26,7 @@ interface CartProps {
 const Cart: React.FC<CartProps> = ({
   cartItems,
   onOpenMenu,
+  onGoToCatalog,
   selectedAddress,
   onOpenStoreAddresses,
   deliveryMethod,
@@ -301,8 +303,20 @@ const Cart: React.FC<CartProps> = ({
         <div className="p-8 pt-6">
         {/* Cart Items */}
         {cartItems.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-lg font-medium text-[#A09CAB]">Ваша корзина пока пуста</p>
+          <div className="flex flex-col items-center justify-center py-16">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-6 text-teal">
+              <path d="M28 68C30.2091 68 32 66.2091 32 64C32 61.7909 30.2091 60 28 60C25.7909 60 24 61.7909 24 64C24 66.2091 25.7909 68 28 68Z" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M60 68C62.2091 68 64 66.2091 64 64C64 61.7909 62.2091 60 60 60C57.7909 60 56 61.7909 56 64C56 66.2091 57.7909 68 60 68Z" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M8 12H16L22.4 45.6C22.6 46.8 23.3 47.9 24.3 48.6C25.3 49.3 26.5 49.6 27.7 49.5H58.4C59.6 49.6 60.8 49.3 61.8 48.6C62.8 47.9 63.5 46.8 63.7 45.6L68 24H18" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2 font-raleway">Ваша корзина пуста</h3>
+            <p className="text-gray-medium text-sm mb-8">Самое время добавить в неё что-нибудь</p>
+            <button
+              onClick={onGoToCatalog}
+              className="bg-teal text-white font-medium py-3 px-10 rounded-full text-base font-raleway hover:opacity-90 transition-opacity"
+            >
+              Перейти в каталог
+            </button>
           </div>
         ) : (
           <>

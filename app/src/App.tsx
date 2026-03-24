@@ -920,6 +920,9 @@ function App() {
             setIsCartOpen(false);
             setIsMenuOpen(true);
           }}
+          onGoToCatalog={() => {
+            setIsCartOpen(false);
+          }}
           selectedAddress={selectedAddress}
           onOpenStoreAddresses={() => handleOpenStoreAddresses(true)}
           deliveryMethod={cartDeliveryMethod}
