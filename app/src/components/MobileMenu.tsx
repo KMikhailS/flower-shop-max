@@ -50,7 +50,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
     : baseMenuItems;
 
   return (
-    <div className="fixed inset-0 bg-white z-50 max-w-[402px] mx-auto">
+    <div className="fixed inset-0 bg-white z-[60] max-w-[402px] mx-auto">
       <div className="flex flex-col h-full">
         {/* Header */}
         <AppHeader
