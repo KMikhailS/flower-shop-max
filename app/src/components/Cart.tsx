@@ -399,7 +399,7 @@ const Cart: React.FC<CartProps> = ({
         )}
 
         {/* Delivery Method */}
-        <div className="mb-6">
+        {cartItems.length > 0 && (<><div className="mb-6">
           <h3 className="text-base font-bold leading-[1.174] text-black mb-4">
             Способ получения
           </h3>
@@ -550,6 +550,7 @@ const Cart: React.FC<CartProps> = ({
             {isSubmitting ? 'Оформление...' : 'Заказать'}
           </span>
         </button>
+        </>)}
         </div>
       </div>
     </div>
