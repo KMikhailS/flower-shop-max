@@ -27,6 +27,7 @@ export default function AppLayout() {
   const [cartDeliveryMethod, setCartDeliveryMethod] = useState<'pickup' | 'delivery'>('pickup');
   const [selectedAddress, setSelectedAddress] = useState('г. Тюмень ул. Пермякова, 62');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isBottomButtonVisible, setIsBottomButtonVisible] = useState(false);
 
   // BackButton integration
   useBackButton(webApp);
@@ -281,12 +282,14 @@ export default function AppLayout() {
     setCartDeliveryMethod,
     isMenuOpen,
     setIsMenuOpen,
+    isBottomButtonVisible,
+    setIsBottomButtonVisible,
   }), [
     webApp, initData, userInfo, products, loadProducts,
     promoBanners, loadPromoBanners, cartItems, handleAddToCart,
     handleRemoveFromCart, handleIncreaseQuantity, handleDecreaseQuantity,
     handleRemoveItem, clearCartItems, selectedAddress, cartDeliveryMethod,
-    isMenuOpen,
+    isMenuOpen, isBottomButtonVisible,
   ]);
 
   return (

@@ -13,12 +13,12 @@ export default function HomePage() {
   const {
     products, promoBanners, loadPromoBanners, cartItems,
     userInfo, initData, setIsMenuOpen,
+    isBottomButtonVisible, setIsBottomButtonVisible,
   } = useAppContext();
   const navigate = useNavigate();
 
   const [activeCategory, setActiveCategory] = useState<string[]>(['all']);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isBottomButtonVisible, setIsBottomButtonVisible] = useState(false);
 
   const uniqueCategories = useMemo(() => {
     const categories = products

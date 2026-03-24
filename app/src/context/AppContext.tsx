@@ -39,6 +39,10 @@ export interface AppContextType {
   // Menu
   isMenuOpen: boolean;
   setIsMenuOpen: (open: boolean) => void;
+
+  // Bottom button visibility (persists across route changes)
+  isBottomButtonVisible: boolean;
+  setIsBottomButtonVisible: (visible: boolean) => void;
 }
 
 export const AppContext = createContext<AppContextType | null>(null);
