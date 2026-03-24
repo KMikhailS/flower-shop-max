@@ -15,13 +15,18 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ banners, isAdminMode, onAddNe
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
 
+  // В админ-режиме добавляем виртуальный слайд для карточки "добавить"
+  const hasAddSlide = isAdminMode && onAddNew;
+  const totalSlides = banners.length + (hasAddSlide ? 1 : 0);
+  const isAddSlide = hasAddSlide && currentBannerIndex === totalSlides - 1;
+
   // Функции навигации по стрелкам
   const handlePrevBanner = () => {
-    setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
+    setCurrentBannerIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
   };
 
   const handleNextBanner = () => {
-    setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+    setCurrentBannerIndex((prev) => (prev + 1) % totalSlides);
   };
 
   // Автоматическая смена баннеров каждые 5 секунд
@@ -30,6 +35,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ banners, isAdminMode, onAddNe
     if (banners.length <= 1) return; // Не нужен интервал для одного баннера
 
     const interval = setInterval(() => {
+      // Авто-прокрутка только по реальным баннерам, не на слайд добавления
       setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
     }, 5000);
 
@@ -38,20 +44,11 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ banners, isAdminMode, onAddNe
 
   // If no banners, handle early returns
   // ВАЖНО: Все условные returns должны быть ПОСЛЕ всех hooks
-  if (banners.length === 0) {
-    // Admin mode - show add card
-    if (isAdminMode && onAddNew) {
-      return (
-        <div className="space-y-2">
-          <AdminAddPromoBanner onClick={onAddNew} />
-        </div>
-      );
-    }
-    // No admin mode - show nothing
+  if (totalSlides === 0) {
     return null;
   }
 
-  const currentBanner = banners[currentBannerIndex];
+  const currentBanner = isAddSlide ? null : banners[currentBannerIndex];
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
@@ -69,11 +66,11 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ banners, isAdminMode, onAddNe
     const isRightSwipe = distance < -50;
 
     if (isLeftSwipe) {
-      // Swipe left - next banner
-      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+      // Swipe left - next slide
+      setCurrentBannerIndex((prev) => (prev + 1) % totalSlides);
     } else if (isRightSwipe) {
-      // Swipe right - previous banner
-      setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
+      // Swipe right - previous slide
+      setCurrentBannerIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
     }
 
     // Reset touch positions
@@ -83,7 +80,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ banners, isAdminMode, onAddNe
 
   const handleBannerClick = () => {
     // Only trigger click if banner has a link and we're not in admin mode
-    if (currentBanner.link && onBannerClick) {
+    if (currentBanner && currentBanner.link && onBannerClick) {
       onBannerClick(currentBanner);
     }
   };
@@ -96,45 +93,51 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ banners, isAdminMode, onAddNe
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <img
-          src={currentBanner.image_url}
-          alt="Promo Banner"
-          className={`w-full h-full object-cover ${currentBanner.link ? 'cursor-pointer' : ''}`}
-          onClick={handleBannerClick}
-        />
-        <div className="absolute top-4 left-5">
-          <div className="bg-green rounded-[30px] px-4 py-2 inline-block">
-            <span className="text-white font-raleway text-xs font-medium">Акция</span>
-          </div>
-        </div>
+        {isAddSlide ? (
+          <AdminAddPromoBanner onClick={onAddNew!} />
+        ) : (
+          <>
+            <img
+              src={currentBanner!.image_url}
+              alt="Promo Banner"
+              className={`w-full h-full object-cover ${currentBanner!.link ? 'cursor-pointer' : ''}`}
+              onClick={handleBannerClick}
+            />
+            <div className="absolute top-4 left-5">
+              <div className="bg-green rounded-[30px] px-4 py-2 inline-block">
+                <span className="text-white font-raleway text-xs font-medium">Акция</span>
+              </div>
+            </div>
 
-        {/* Status Badge - показываем только для BLOCKED баннеров */}
-        {currentBanner.status === 'BLOCKED' && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-medium bg-opacity-90 text-white text-sm font-semibold px-4 py-2 rounded-full">
-            Не активна
-          </div>
+            {/* Status Badge - показываем только для BLOCKED баннеров */}
+            {currentBanner!.status === 'BLOCKED' && (
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-medium bg-opacity-90 text-white text-sm font-semibold px-4 py-2 rounded-full">
+                Не активна
+              </div>
+            )}
+
+            {/* Edit Button - only show for ADMIN */}
+            {isAdminMode && onEdit && (
+              <div className="absolute top-4 right-5">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(currentBanner!);
+                  }}
+                  className="w-[50px] h-[50px] rounded-full bg-[#80D1C1] flex items-center justify-center shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)]"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+              </div>
+            )}
+          </>
         )}
 
-        {/* Edit Button - only show for ADMIN */}
-        {isAdminMode && onEdit && (
-          <div className="absolute top-4 right-5">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(currentBanner);
-              }}
-              className="w-[50px] h-[50px] rounded-full bg-[#80D1C1] flex items-center justify-center shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)]"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-            </button>
-          </div>
-        )}
-
-        {/* Navigation Arrows - only show if multiple banners */}
-        {banners.length > 1 && (
+        {/* Navigation Arrows - only show if multiple slides */}
+        {totalSlides > 1 && (
           <>
             <button
               onClick={handlePrevBanner}
@@ -166,10 +169,10 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ banners, isAdminMode, onAddNe
         )}
       </div>
 
-      {/* Pagination dots - only show if multiple banners */}
-      {banners.length > 1 && (
+      {/* Pagination dots - only show if multiple slides */}
+      {totalSlides > 1 && (
         <div className="flex justify-center gap-2">
-          {banners.map((_, index) => (
+          {Array.from({ length: totalSlides }).map((_, index) => (
             <div
               key={index}
               className={`rounded-full transition-all ${
@@ -180,11 +183,6 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ banners, isAdminMode, onAddNe
             />
           ))}
         </div>
-      )}
-
-      {/* Admin add new banner card */}
-      {isAdminMode && onAddNew && (
-        <AdminAddPromoBanner onClick={onAddNew} />
       )}
     </div>
   );
