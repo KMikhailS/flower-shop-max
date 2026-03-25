@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import ScrollPicker from './ScrollPicker';
 
 type Props = {
   isOpen: boolean;
@@ -80,33 +81,6 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
   const dragStartYRef = useRef<number | null>(null);
   const pointerIdRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    setDraftDate(initialDate || '');
-    const m = initialTime ? /^(\d{2}):(\d{2})$/.exec(initialTime) : null;
-    setDraftHour(m ? m[1] : '');
-    setDraftMinute(m ? m[2] : '');
-
-    const initial = initialDate ? parseYMD(initialDate) : null;
-    setVisibleMonth(initial || today);
-
-    // Reset drag state on each open (component isn't unmounted when isOpen=false)
-    setDragY(0);
-    setIsDragging(false);
-    pointerIdRef.current = null;
-    dragStartYRef.current = null;
-  }, [isOpen, initialDate, initialTime, today]);
-
-  // Prevent Telegram mini app from being closed by vertical swipe while bottom sheet is open
-  useEffect(() => {
-    if (!isOpen) return;
-    const tg = window.WebApp;
-    tg?.disableVerticalSwipes?.();
-    return () => {
-      tg?.enableVerticalSwipes?.();
-    };
-  }, [isOpen]);
-
   const hourOptions = useMemo(() => {
     const wtFrom = (workTimeFrom || '').trim();
     const wtTo = (workTimeTo || '').trim();
@@ -152,6 +126,33 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
     }
     return options;
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setDraftDate(initialDate || '');
+    const m = initialTime ? /^(\d{2}):(\d{2})$/.exec(initialTime) : null;
+    setDraftHour(m ? m[1] : hourOptions[0] || '');
+    setDraftMinute(m ? m[2] : minuteOptions[0] || '');
+
+    const initial = initialDate ? parseYMD(initialDate) : null;
+    setVisibleMonth(initial || today);
+
+    // Reset drag state on each open (component isn't unmounted when isOpen=false)
+    setDragY(0);
+    setIsDragging(false);
+    pointerIdRef.current = null;
+    dragStartYRef.current = null;
+  }, [isOpen, initialDate, initialTime, today, hourOptions, minuteOptions]);
+
+  // Prevent Telegram mini app from being closed by vertical swipe while bottom sheet is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const tg = window.WebApp;
+    tg?.disableVerticalSwipes?.();
+    return () => {
+      tg?.enableVerticalSwipes?.();
+    };
+  }, [isOpen]);
 
   const isValidHour = !!draftHour && hourOptions.includes(draftHour);
   const isValidMinute = !!draftMinute && minuteOptions.includes(draftMinute);
@@ -399,39 +400,29 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
             })}
           </div>
 
-          {/* Time */}
+          {/* Time — scroll picker */}
           <div className="mt-5">
             <div className="text-sm font-semibold text-black mb-2">Время доставки</div>
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label className="block text-xs text-gray-500 mb-1">Часы</label>
-                <select
+            <div
+              className="relative rounded-[16px] bg-gray-light overflow-hidden"
+              style={{ height: 200 }}
+            >
+              {/* White highlight band in center */}
+              <div
+                className="absolute left-0 right-0 pointer-events-none rounded-[12px] bg-white"
+                style={{ top: 80, height: 40, zIndex: 1 }}
+              />
+              <div className="flex h-full relative" style={{ zIndex: 2 }}>
+                <ScrollPicker
+                  items={hourOptions}
                   value={draftHour}
-                  onChange={(e) => setDraftHour(e.target.value)}
-                  className="w-full h-[50px] px-4 rounded-[14px] bg-gray-light text-base font-semibold text-black"
-                >
-                  <option value="" disabled />
-                  {hourOptions.map((h) => (
-                    <option key={h} value={h}>
-                      {h}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1">
-                <label className="block text-xs text-gray-500 mb-1">Минуты</label>
-                <select
+                  onChange={setDraftHour}
+                />
+                <ScrollPicker
+                  items={minuteOptions}
                   value={draftMinute}
-                  onChange={(e) => setDraftMinute(e.target.value)}
-                  className="w-full h-[50px] px-4 rounded-[14px] bg-gray-light text-base font-semibold text-black"
-                >
-                  <option value="" disabled />
-                  {minuteOptions.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setDraftMinute}
+                />
               </div>
             </div>
           </div>
