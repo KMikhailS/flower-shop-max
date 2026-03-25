@@ -24,6 +24,7 @@ export default function CartPage() {
       onRemoveItem={handleRemoveItem}
       onClearCart={clearCartItems}
       onOpenMyOrders={() => navigate('/orders')}
+      onProductClick={(id) => navigate(`/product/${id}`)}
     />
   );
 }

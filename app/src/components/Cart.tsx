@@ -21,6 +21,7 @@ interface CartProps {
   onRemoveItem: (productId: number) => void;
   onClearCart: () => void;
   onOpenMyOrders: () => void;
+  onProductClick: (productId: number) => void;
 }
 
 const Cart: React.FC<CartProps> = ({
@@ -35,7 +36,8 @@ const Cart: React.FC<CartProps> = ({
   onDecreaseQuantity,
   onRemoveItem,
   onClearCart,
-  onOpenMyOrders
+  onOpenMyOrders,
+  onProductClick
 }) => {
   const { webApp, user } = useMaxWebApp();
   const [customAddress, setCustomAddress] = React.useState('г Тюмень, ');
@@ -330,6 +332,7 @@ const Cart: React.FC<CartProps> = ({
                   onDecrease={() => handleDecrease(item.product.id)}
                   onIncrease={() => handleIncrease(item.product.id)}
                   onRemove={() => handleRemove(item.product.id)}
+                  onImageClick={() => onProductClick(item.product.id)}
                 />
               );
             })}

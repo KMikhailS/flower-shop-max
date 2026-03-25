@@ -14,6 +14,7 @@ interface CartItemProps {
   onDecrease: () => void;
   onIncrease: () => void;
   onRemove: () => void;
+  onImageClick: () => void;
 }
 
 const CartItem: React.FC<CartItemProps> = ({
@@ -23,14 +24,16 @@ const CartItem: React.FC<CartItemProps> = ({
   onDecrease,
   onIncrease,
   onRemove,
+  onImageClick,
 }) => {
   return (
     <div className="relative bg-white rounded-[15px] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.25)] p-6 pb-8 mb-6">
       <div className="flex gap-4 mb-3">
         {/* Product Image */}
         <div
-          className="w-[86px] h-[82px] rounded-[10px] bg-cover bg-center flex-shrink-0"
+          className="w-[86px] h-[82px] rounded-[10px] bg-cover bg-center flex-shrink-0 cursor-pointer"
           style={{ backgroundImage: `url(${product.image})` }}
+          onClick={onImageClick}
         />
 
         {/* Product Info */}
