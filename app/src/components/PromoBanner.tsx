@@ -31,8 +31,10 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ banners, isAdminMode, onAddNe
 
   // Автоматическая смена баннеров каждые 5 секунд
   // ВАЖНО: useEffect должен быть ДО любых условных returns (правило React hooks)
+  // Отключаем автопрокрутку когда находимся на слайде добавления нового баннера
   useEffect(() => {
     if (banners.length <= 1) return; // Не нужен интервал для одного баннера
+    if (isAddSlide) return; // Не крутим когда на слайде добавления
 
     const interval = setInterval(() => {
       // Авто-прокрутка только по реальным баннерам, не на слайд добавления
@@ -40,7 +42,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ banners, isAdminMode, onAddNe
     }, 5000);
 
     return () => clearInterval(interval); // Очистка при unmount
-  }, [banners.length]);
+  }, [banners.length, isAddSlide]);
 
   // If no banners, handle early returns
   // ВАЖНО: Все условные returns должны быть ПОСЛЕ всех hooks
