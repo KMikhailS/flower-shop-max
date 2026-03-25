@@ -285,18 +285,15 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
 
       {/* Bottom sheet */}
       <div
-        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[24px] shadow-[0px_-6px_16px_rgba(0,0,0,0.15)] max-h-[92vh] overflow-hidden"
-        style={sheetStyle}
+        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[24px] shadow-[0px_-6px_16px_rgba(0,0,0,0.15)] max-h-[92vh] overflow-hidden select-none"
+        style={{ ...sheetStyle, touchAction: 'none' }}
+        onPointerDown={handleDragStart}
+        onPointerMove={handleDragMove}
+        onPointerUp={handleDragEnd}
+        onPointerCancel={handleDragEnd}
       >
         <div className="px-6 pt-6 pb-4 overflow-y-auto max-h-[92vh]">
-          <div
-            className="flex justify-center select-none py-2"
-            style={{ touchAction: 'none' }}
-            onPointerDown={handleDragStart}
-            onPointerMove={handleDragMove}
-            onPointerUp={handleDragEnd}
-            onPointerCancel={handleDragEnd}
-          >
+          <div className="flex justify-center py-2">
             <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
           </div>
 
