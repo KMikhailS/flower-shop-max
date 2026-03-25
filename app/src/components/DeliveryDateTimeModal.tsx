@@ -80,6 +80,7 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
   const [isDragging, setIsDragging] = useState(false);
   const dragStartYRef = useRef<number | null>(null);
   const pointerIdRef = useRef<number | null>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   const hourOptions = useMemo(() => {
     const wtFrom = (workTimeFrom || '').trim();
@@ -144,13 +145,27 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
     dragStartYRef.current = null;
   }, [isOpen, initialDate, initialTime, today, hourOptions, minuteOptions]);
 
-  // Prevent Telegram mini app from being closed by vertical swipe while bottom sheet is open
+  // Prevent mini app from being closed by vertical swipe while bottom sheet is open
   useEffect(() => {
     if (!isOpen) return;
     const tg = window.WebApp;
     tg?.disableVerticalSwipes?.();
     return () => {
       tg?.enableVerticalSwipes?.();
+    };
+  }, [isOpen]);
+
+  // Block native touch events on the sheet so they don't propagate to the host app
+  useEffect(() => {
+    if (!isOpen) return;
+    const el = sheetRef.current;
+    if (!el) return;
+    const blockTouch = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+    el.addEventListener('touchmove', blockTouch, { passive: false });
+    return () => {
+      el.removeEventListener('touchmove', blockTouch);
     };
   }, [isOpen]);
 
@@ -285,6 +300,7 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
 
       {/* Bottom sheet */}
       <div
+        ref={sheetRef}
         className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[24px] shadow-[0px_-6px_16px_rgba(0,0,0,0.15)] max-h-[92vh] overflow-hidden select-none"
         style={{ ...sheetStyle, touchAction: 'none' }}
         onPointerDown={handleDragStart}
