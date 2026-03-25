@@ -20,7 +20,7 @@ interface MaxWebApp {
     close(): void;
     openLink(url: string): void;
     openMaxLink(url: string): void;
-    requestContact(callback?: (result: { status: string; data?: { phone_number?: string } }) => void): void;
+    requestContact(): Promise<{ phone: string }>;
     BackButton: {
         show(): void;
         hide(): void;

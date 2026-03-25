@@ -233,20 +233,19 @@ const Cart: React.FC<CartProps> = ({
         }
 
         if (webApp?.requestContact) {
-          webApp.requestContact(async (result) => {
-            if (result.status === 'ok' && result.data?.phone_number) {
-              try {
-                await updateUserPhone(result.data.phone_number, initData);
-                webApp?.HapticFeedback.notificationOccurred('success');
-                window.alert('Номер телефона получен! Нажмите "Заказать" ещё раз.');
-              } catch (e) {
-                console.error('Failed to save phone:', e);
-                window.alert('Не удалось сохранить номер телефона.');
-              }
+          try {
+            const result = await webApp.requestContact();
+            if (result?.phone) {
+              await updateUserPhone(result.phone, initData);
+              webApp?.HapticFeedback.notificationOccurred('success');
+              window.alert('Номер телефона получен! Нажмите "Заказать" ещё раз.');
             } else {
               window.alert('Не удалось получить номер телефона.');
             }
-          });
+          } catch (e) {
+            console.error('Failed to request contact:', e);
+            window.alert('Не удалось получить номер телефона.');
+          }
         } else {
           window.alert('Ваше приложение не поддерживает запрос контакта.');
         }
