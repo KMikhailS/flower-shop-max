@@ -223,12 +223,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onOpenCart, onAddToC
         <div className="fixed bottom-0 left-0 right-0 max-w-[402px] mx-auto flex gap-[10px] px-4 pb-4 pt-2 bg-white z-10">
           <button
             onClick={() => {
-              onAddToCart(product);
+              if (productQuantity === 0) {
+                onAddToCart(product);
+              }
               onOpenCart();
             }}
             className="w-[180px] h-[55px] bg-[#80D1C1] rounded-[30px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-center"
           >
-            <span className="text-sm font-semibold leading-[1.174] text-black">Купить сейчас</span>
+            <span className="text-sm font-semibold leading-[1.174] text-black">{productQuantity > 0 ? 'В корзину' : 'Купить сейчас'}</span>
           </button>
           {productQuantity > 0 ? (
             <div className="w-[180px] h-[55px] bg-[#80D1C1] rounded-[30px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-between px-4">
