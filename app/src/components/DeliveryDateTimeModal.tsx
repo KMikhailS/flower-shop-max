@@ -155,17 +155,48 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
     };
   }, [isOpen]);
 
-  // Block native touch events on the sheet so they don't propagate to the host app
+  // Block touch events that would cause overscroll (and trigger host app close),
+  // but allow normal content scrolling inside the sheet
   useEffect(() => {
     if (!isOpen) return;
     const el = sheetRef.current;
     if (!el) return;
-    const blockTouch = (e: TouchEvent) => {
-      e.preventDefault();
+
+    const contentEl = el.querySelector('[data-scroll-content]') as HTMLElement | null;
+
+    const blockOverscroll = (e: TouchEvent) => {
+      if (!contentEl) {
+        e.preventDefault();
+        return;
+      }
+
+      const { scrollTop, scrollHeight, clientHeight } = contentEl;
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      const isAtTop = scrollTop <= 0;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight;
+
+      // Determine scroll direction from the touch movement
+      const startY = (blockOverscroll as any)._lastY ?? touch.clientY;
+      const dy = touch.clientY - startY;
+      (blockOverscroll as any)._lastY = touch.clientY;
+
+      // Block if trying to scroll past boundaries (overscroll)
+      if ((isAtTop && dy > 0) || (isAtBottom && dy < 0)) {
+        e.preventDefault();
+      }
     };
-    el.addEventListener('touchmove', blockTouch, { passive: false });
+
+    const resetLastY = (e: TouchEvent) => {
+      (blockOverscroll as any)._lastY = e.touches[0]?.clientY;
+    };
+
+    el.addEventListener('touchstart', resetLastY, { passive: true });
+    el.addEventListener('touchmove', blockOverscroll, { passive: false });
     return () => {
-      el.removeEventListener('touchmove', blockTouch);
+      el.removeEventListener('touchstart', resetLastY);
+      el.removeEventListener('touchmove', blockOverscroll);
     };
   }, [isOpen]);
 
@@ -308,7 +339,7 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
         onPointerUp={handleDragEnd}
         onPointerCancel={handleDragEnd}
       >
-        <div className="px-6 pt-6 pb-4 overflow-y-auto max-h-[92vh]">
+        <div data-scroll-content className="px-6 pt-6 pb-4 overflow-y-auto max-h-[92vh]">
           <div className="flex justify-center py-2">
             <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
           </div>
