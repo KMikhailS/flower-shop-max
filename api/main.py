@@ -136,7 +136,7 @@ class MaxBotClient:
 # --- Handlers ---
 
 async def handle_bot_started(bot: MaxBotClient, update: dict):
-    """Handle bot_started event — equivalent of /start in Telegram"""
+    """Handle bot_started event — equivalent of /start"""
     user = update.get("user", {})
     chat_id = update.get("chat_id")
     user_id = user.get("user_id")

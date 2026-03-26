@@ -215,6 +215,10 @@ const DeliveryDateTimeModal: React.FC<Props> = ({
     // Only start drag on primary button for mouse
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
+    // Don't start drag when interacting with buttons/links (fixes web click handling)
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, [role="button"]')) return;
+
     pointerIdRef.current = e.pointerId;
     dragStartYRef.current = e.clientY;
     setIsDragging(true);

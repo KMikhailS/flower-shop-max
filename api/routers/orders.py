@@ -29,7 +29,7 @@ async def create_order_endpoint(
     """
     Create a new order
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     Any authenticated user can create an order
     """
     logger.info(f"User {user_id} creating new order for user_id={order.user_id}")
@@ -153,7 +153,7 @@ async def update_order_endpoint(
     """
     Update existing order (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} updating order {order_id}")
@@ -217,7 +217,7 @@ async def get_my_orders_endpoint(
     """
     Get orders for current user
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     Returns only orders belonging to the authenticated user
     """
     logger.info(f"User {user_id} fetching their orders")
@@ -269,7 +269,7 @@ async def get_order_endpoint(
     """
     Get order by ID (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} fetching order {order_id}")
@@ -331,7 +331,7 @@ async def get_orders_endpoint(
     - limit: Limit number of results
     - offset: Offset for pagination
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} fetching orders with filters: order_id={order_id}, statuses={statuses}, date_from={date_from}, date_to={date_to}, limit={limit}, offset={offset}")
@@ -389,7 +389,7 @@ async def delete_order_endpoint(
     """
     Delete order (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} deleting order {order_id}")

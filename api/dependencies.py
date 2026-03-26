@@ -8,7 +8,7 @@ async def verify_admin_mode(user_id: int = Depends(verify_init_data)) -> int:
     """
     Verify that the user has ADMIN role
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     Returns user_id if user has ADMIN role, raises 403 otherwise
     """
     user = await get_user(user_id)

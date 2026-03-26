@@ -72,7 +72,7 @@ async def get_all_goods_endpoint(user_id: int = Depends(verify_init_data)):
     """
     Get all goods regardless of status
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     Any authenticated user can access this endpoint (needed for order history)
     """
     logger.info(f"User {user_id} fetching all goods (all statuses)")
@@ -112,7 +112,7 @@ async def create_good_card_endpoint(
     """
     Create a new good card (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} creating new good card: {good_card.name}")
@@ -165,7 +165,7 @@ async def update_good_card_endpoint(
     """
     Update existing good card (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} updating good card {good_id}: {good_card.name}")
@@ -307,7 +307,7 @@ async def delete_good_endpoint(
     """
     Delete good (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} deleting good {good_id}")
@@ -337,7 +337,7 @@ async def block_good_endpoint(
     """
     Block good - set status to BLOCKED (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} blocking good {good_id}")
@@ -377,7 +377,7 @@ async def activate_good_endpoint(
     """
     Activate good - set status to NEW (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} activating good {good_id}")
@@ -418,7 +418,7 @@ async def reorder_good_images_endpoint(
     """
     Reorder images for a good (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} reordering images for good {good_id}")
@@ -459,7 +459,7 @@ async def delete_good_image_endpoint(
     """
     Delete a specific image from a good (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} deleting image {image_url} from good {good_id}")

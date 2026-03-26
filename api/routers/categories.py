@@ -55,7 +55,7 @@ async def get_all_categories_endpoint(
     """
     Get all categories regardless of status (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} fetching all categories")
@@ -89,7 +89,7 @@ async def get_category_endpoint(
     """
     Get category by id (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} fetching category {category_id}")
@@ -122,7 +122,7 @@ async def create_category_endpoint(
     """
     Create a new category (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} creating new category: {category_request.title}")
@@ -150,7 +150,7 @@ async def update_category_endpoint(
     """
     Update existing category (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} updating category {category_id}: {category_request.title}")
@@ -183,7 +183,7 @@ async def delete_category_endpoint(
     """
     Delete category (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} deleting category {category_id}")
@@ -214,7 +214,7 @@ async def update_category_status_endpoint(
     """
     Update category status (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} updating status for category {category_id} to {new_status}")

@@ -89,7 +89,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 /**
  * Fetch current user information from backend
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<UserInfo> - User information
  * @throws Error if request fails
  */
@@ -115,7 +115,7 @@ export async function fetchUserInfo(initData: string): Promise<UserInfo> {
  * Create a new good card (ADMIN only)
  *
  * @param goodCardData - The good card data to create
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<GoodDTO> - Created good card data
  * @throws Error if request fails
  */
@@ -146,7 +146,7 @@ export async function createGoodCard(
  *
  * @param goodId - ID of the good to update
  * @param goodCardData - The updated good card data
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<GoodDTO> - Updated good card data
  * @throws Error if request fails
  */
@@ -205,7 +205,7 @@ export async function uploadImages(files: File[]): Promise<string[]> {
  *
  * @param goodId - ID of the good to add images to
  * @param files - Array of image files to upload
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<string[]> - Array of uploaded image URLs
  * @throws Error if upload fails
  */
@@ -262,7 +262,7 @@ export async function fetchGoods(): Promise<GoodDTO[]> {
 /**
  * Fetch all goods regardless of status (ADMIN only)
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<GoodDTO[]> - List of all goods
  * @throws Error if request fails
  */
@@ -288,7 +288,7 @@ export async function fetchAllGoods(initData: string): Promise<GoodDTO[]> {
  * Delete good (ADMIN only)
  *
  * @param goodId - ID of the good to delete
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<void>
  * @throws Error if request fails
  */
@@ -314,7 +314,7 @@ export async function deleteGood(
  * Block good - set status to BLOCKED (ADMIN only)
  *
  * @param goodId - ID of the good to block
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<GoodDTO> - Updated good card data
  * @throws Error if request fails
  */
@@ -343,7 +343,7 @@ export async function blockGood(
  * Activate good - set status to NEW (ADMIN only)
  *
  * @param goodId - ID of the good to activate
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<GoodDTO> - Updated good card data
  * @throws Error if request fails
  */
@@ -394,7 +394,7 @@ export async function fetchPromoBanners(): Promise<PromoBannerDTO[]> {
 /**
  * Fetch ALL promo banners including BLOCKED (ADMIN only)
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<PromoBannerDTO[]> - All promo banners
  * @throws Error if request fails
  */
@@ -420,7 +420,7 @@ export async function fetchAllPromoBanners(initData: string): Promise<PromoBanne
  * Create a new promo banner by uploading an image (ADMIN only)
  *
  * @param file - Image file to upload
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<PromoBannerDTO> - Created promo banner data
  * @throws Error if upload fails
  */
@@ -452,7 +452,7 @@ export async function createPromoBanner(
  * Delete promo banner (ADMIN only)
  *
  * @param bannerId - ID of the banner to delete
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<void>
  * @throws Error if request fails
  */
@@ -488,7 +488,7 @@ export async function deletePromoBanner(
  * Block promo banner - set status to BLOCKED (ADMIN only)
  *
  * @param bannerId - ID of the banner to block
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<PromoBannerDTO> - Updated promo banner data
  * @throws Error if request fails
  */
@@ -517,7 +517,7 @@ export async function blockPromoBanner(
  * Activate promo banner - set status to NEW (ADMIN only)
  *
  * @param bannerId - ID of the banner to activate
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<PromoBannerDTO> - Updated promo banner data
  * @throws Error if request fails
  */
@@ -547,7 +547,7 @@ export async function activatePromoBanner(
  *
  * @param bannerId - ID of the banner to update
  * @param link - Product ID to link to (or null to remove link)
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<PromoBannerDTO> - Updated promo banner data
  * @throws Error if request fails
  */
@@ -604,7 +604,7 @@ export async function fetchShopAddresses(): Promise<ShopAddress[]> {
  * Create a new shop address (ADMIN only)
  *
  * @param address - The address string
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<ShopAddress> - Created shop address
  * @throws Error if request fails
  */
@@ -635,7 +635,7 @@ export async function createShopAddress(
  *
  * @param addressId - ID of the address to update
  * @param address - The updated address string
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<ShopAddress> - Updated shop address
  * @throws Error if request fails
  */
@@ -666,7 +666,7 @@ export async function updateShopAddress(
  * Delete shop address (ADMIN only)
  *
  * @param addressId - ID of the address to delete
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<void>
  * @throws Error if request fails
  */
@@ -693,7 +693,7 @@ export async function deleteShopAddress(
  *
  * @param goodId - ID of the good to reorder images for
  * @param imageUrls - Array of image URLs in new order
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<GoodDTO> - Updated good card data
  * @throws Error if request fails
  */
@@ -725,7 +725,7 @@ export async function reorderGoodImages(
  *
  * @param goodId - ID of the good
  * @param imageUrl - URL of the image to delete
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<void>
  * @throws Error if request fails
  */
@@ -774,7 +774,7 @@ export async function fetchCategories(): Promise<CategoryDTO[]> {
 /**
  * Fetch all categories regardless of status (ADMIN only)
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<CategoryDTO[]> - List of all categories
  * @throws Error if request fails
  */
@@ -800,7 +800,7 @@ export async function fetchAllCategories(initData: string): Promise<CategoryDTO[
  * Create a new category (ADMIN only)
  *
  * @param title - The category title
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<CategoryDTO> - Created category
  * @throws Error if request fails
  */
@@ -831,7 +831,7 @@ export async function createCategory(
  *
  * @param categoryId - ID of the category to update
  * @param title - The updated category title
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<CategoryDTO> - Updated category
  * @throws Error if request fails
  */
@@ -862,7 +862,7 @@ export async function updateCategory(
  * Delete category (ADMIN only)
  *
  * @param categoryId - ID of the category to delete
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<void>
  * @throws Error if request fails
  */
@@ -888,7 +888,7 @@ export async function deleteCategory(
  * Update user mode (ADMIN only)
  *
  * @param mode - New mode value ('ADMIN' or 'USER')
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<UserInfo> - Updated user information
  * @throws Error if request fails
  */
@@ -918,7 +918,7 @@ export async function updateUserMode(
  * Update current user phone number
  *
  * @param phone - Phone number to set
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<UserInfo> - Updated user information
  * @throws Error if request fails
  */
@@ -948,7 +948,7 @@ export async function updateUserPhone(
  * Fetch user by username (ADMIN only)
  *
  * @param username - Username to search for
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<UserInfo> - User information
  * @throws Error if request fails
  */
@@ -979,7 +979,7 @@ export async function fetchUserByUsername(
  * @param userId - User ID to update
  * @param role - New role value ('ADMIN' or 'USER')
  * @param mode - New mode value ('ADMIN' or 'USER')
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<UserInfo> - Updated user information
  * @throws Error if request fails
  */
@@ -1010,7 +1010,7 @@ export async function updateUser(
 /**
  * Fetch all active settings (ADMIN only)
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<Setting[]> - List of active settings
  * @throws Error if request fails
  */
@@ -1035,7 +1035,7 @@ export async function fetchSettings(initData: string): Promise<Setting[]> {
 /**
  * Fetch support chat id for feedback
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<string> - Support chat id
  * @throws Error if request fails
  */
@@ -1060,7 +1060,7 @@ export async function fetchSupportChatId(initData: string): Promise<string> {
 /**
  * Fetch payment info text for PaymentInfo screen
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<string> - Payment info text
  * @throws Error if request fails
  */
@@ -1085,7 +1085,7 @@ export async function fetchPaymentInfoText(initData: string): Promise<string> {
 /**
  * Fetch delivery info text for DeliveryInfo screen
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<string> - Delivery info text
  * @throws Error if request fails
  */
@@ -1110,7 +1110,7 @@ export async function fetchDeliveryInfoText(initData: string): Promise<string> {
 /**
  * Fetch delivery amount for cart calculations
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<string> - Delivery amount (string number)
  * @throws Error if request fails
  */
@@ -1135,7 +1135,7 @@ export async function fetchDeliveryAmount(initData: string): Promise<string> {
 /**
  * Fetch postcard amount for cart calculations
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<string> - Postcard amount (string number)
  * @throws Error if request fails
  */
@@ -1160,7 +1160,7 @@ export async function fetchPostcardAmount(initData: string): Promise<string> {
 /**
  * Fetch work time hours for cart time picker
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<{ work_time_from, work_time_to }> - Hour boundaries as strings (can be empty)
  * @throws Error if request fails
  */
@@ -1192,7 +1192,7 @@ export async function fetchWorkTime(
  *
  * @param type - Setting type (e.g., 'SUPPORT_CHAT_ID', 'MANAGER_CHAT_ID')
  * @param value - Setting value
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<Setting> - Created or updated setting
  * @throws Error if request fails
  */
@@ -1223,7 +1223,7 @@ export async function upsertSetting(
  * Delete a setting by type (ADMIN only)
  *
  * @param type - Setting type to delete
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<void>
  * @throws Error if request fails
  */
@@ -1361,7 +1361,7 @@ export interface OrdersFilterParams {
  * Create a new order
  *
  * @param orderData - Order data to create
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<OrderDTO> - Created order data
  * @throws Error if request fails
  */
@@ -1390,7 +1390,7 @@ export async function createOrder(
 /**
  * Fetch current user's orders
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<OrderDTO[]> - List of user's orders
  * @throws Error if request fails
  */
@@ -1415,7 +1415,7 @@ export async function fetchMyOrders(initData: string): Promise<OrderDTO[]> {
 /**
  * Fetch all orders from all users with optional filters (ADMIN only)
  *
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @param filters - Optional filter parameters (statuses, dateFrom, dateTo, limit, offset)
  * @returns Promise<OrdersPageDTO> - Paginated orders response with items and total count
  * @throws Error if request fails
@@ -1469,7 +1469,7 @@ export async function fetchAllOrders(
  *
  * @param orderId - ID of the order to update
  * @param status - New status value
- * @param initData - Telegram WebApp initData string
+ * @param initData - Max WebApp initData string
  * @returns Promise<OrderDTO> - Updated order data
  * @throws Error if request fails
  */

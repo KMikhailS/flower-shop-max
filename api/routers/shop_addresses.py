@@ -52,7 +52,7 @@ async def create_shop_address_endpoint(
     """
     Create a new shop address (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} creating new shop address: {address_request.address}")
@@ -80,7 +80,7 @@ async def update_shop_address_endpoint(
     """
     Update existing shop address (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} updating shop address {address_id}: {address_request.address}")
@@ -113,7 +113,7 @@ async def delete_shop_address_endpoint(
     """
     Delete shop address (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     User must be in ADMIN mode
     """
     logger.info(f"User {user_id} deleting shop address {address_id}")

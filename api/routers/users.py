@@ -15,7 +15,7 @@ async def get_current_user(user_id: int = Depends(verify_init_data)):
     """
     Get current user information
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     """
     logger.info(f"Fetching user info for user_id={user_id}")
 
@@ -45,7 +45,7 @@ async def get_support_chat_id(user_id: int = Depends(verify_init_data)):
     """
     Get support chat id for feedback
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     """
     logger.info(f"Fetching support chat id for user_id={user_id}")
 
@@ -64,7 +64,7 @@ async def get_payment_info_text(user_id: int = Depends(verify_init_data)):
     """
     Get payment info text for PaymentInfo screen
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     """
     logger.info(f"Fetching payment info text for user_id={user_id}")
 
@@ -81,7 +81,7 @@ async def get_delivery_info_text(user_id: int = Depends(verify_init_data)):
     """
     Get delivery info text for DeliveryInfo screen
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     """
     logger.info(f"Fetching delivery info text for user_id={user_id}")
 
@@ -98,7 +98,7 @@ async def get_delivery_amount(user_id: int = Depends(verify_init_data)):
     """
     Get delivery amount for cart calculations
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     """
     logger.info(f"Fetching delivery amount for user_id={user_id}")
 
@@ -115,7 +115,7 @@ async def get_postcard_amount(user_id: int = Depends(verify_init_data)):
     """
     Get postcard amount for cart calculations
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     """
     logger.info(f"Fetching postcard amount for user_id={user_id}")
 
@@ -132,7 +132,7 @@ async def get_work_time(user_id: int = Depends(verify_init_data)):
     """
     Get shop work time hours for cart time picker
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     """
     logger.info(f"Fetching work time for user_id={user_id}")
 
@@ -157,7 +157,7 @@ async def get_user_by_name(
     """
     Get user information by username (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header and ADMIN mode
+    Requires valid Max WebApp initData in Authorization header and ADMIN mode
     """
     logger.info(f"Fetching user info for username={username} by admin user_id={user_id}")
 
@@ -191,7 +191,7 @@ async def update_user(
     """
     Update user role and mode (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header and ADMIN mode
+    Requires valid Max WebApp initData in Authorization header and ADMIN mode
     """
     logger.info(f"Updating user {user_id} by admin user_id={admin_user_id}: role={request.role}, mode={request.mode}")
 
@@ -242,7 +242,7 @@ async def update_current_user_mode(
     """
     Update current user mode (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header and ADMIN mode
+    Requires valid Max WebApp initData in Authorization header and ADMIN mode
     """
     logger.info(f"Updating mode for user_id={user_id} to {request.mode}")
 
@@ -285,7 +285,7 @@ async def update_current_user_phone(
     """
     Update current user phone number
 
-    Requires valid Telegram WebApp initData in Authorization header
+    Requires valid Max WebApp initData in Authorization header
     Any authenticated user can update their own phone
     """
     logger.info(f"Updating phone for user_id={user_id}")
@@ -319,7 +319,7 @@ async def get_settings(user_id: int = Depends(verify_admin_mode)):
     """
     Get all active settings (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header and ADMIN mode
+    Requires valid Max WebApp initData in Authorization header and ADMIN mode
     """
     logger.info(f"Fetching all settings for user_id={user_id}")
 
@@ -350,7 +350,7 @@ async def create_or_update_setting(
     """
     Create or update a setting (upsert) (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header and ADMIN mode
+    Requires valid Max WebApp initData in Authorization header and ADMIN mode
     """
     logger.info(f"Upserting setting type={request.type} for user_id={user_id}")
 
@@ -378,7 +378,7 @@ async def delete_setting_by_type(
     """
     Delete a setting by type (ADMIN only)
 
-    Requires valid Telegram WebApp initData in Authorization header and ADMIN mode
+    Requires valid Max WebApp initData in Authorization header and ADMIN mode
     """
     logger.info(f"Deleting setting type={setting_type} by user_id={user_id}")
 
