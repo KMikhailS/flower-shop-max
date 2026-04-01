@@ -267,6 +267,12 @@ const Settings: React.FC<SettingsProps> = ({
       // Save support chat ID (empty -> delete)
       const supportChatIdValue = supportChatId.trim();
       if (supportChatIdValue) {
+        // Validate: digits with optional minus sign (for groups/supergroups)
+        if (!/^-?\d+$/.test(supportChatIdValue)) {
+          setError('ID чата службы поддержки должен быть числом (может быть отрицательным)');
+          setIsSaving(false);
+          return;
+        }
         await upsertSetting('SUPPORT_CHAT_ID', supportChatIdValue, initData);
         existingSettingTypesRef.current.add('SUPPORT_CHAT_ID');
       } else if (existingSettingTypesRef.current.has('SUPPORT_CHAT_ID')) {
@@ -556,7 +562,7 @@ const Settings: React.FC<SettingsProps> = ({
                 {/* Support Chat ID */}
                 <div className="flex flex-col gap-3">
                   <label className="text-base font-semibold text-black">
-                    Чат службы поддержки
+                    ID чата службы поддержки
                   </label>
                   <input
                     type="text"
