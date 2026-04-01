@@ -226,10 +226,7 @@ export default function AppLayout() {
     if (/^https?:\/\//.test(normalized)) return { url: normalized, preferMax: true };
     if (normalized.startsWith('@')) return { url: `https://max.ru/${normalized.slice(1)}`, preferMax: true };
     if (/^-?\d+$/.test(normalized)) {
-      if (normalized.startsWith('-100') && normalized.length > 4) {
-        return { url: `https://max.ru/c/${normalized.slice(4)}/1`, preferMax: true };
-      }
-      return { url: `https://max.ru/chat/${normalized}`, preferMax: true };
+      return null;
     }
     return null;
   };

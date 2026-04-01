@@ -1,9 +1,13 @@
 import logging
+import os
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from auth import verify_init_data, verify_init_data_with_name, verify_admin_mode
 from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest, SupportChatDTO, PaymentInfoTextDTO, DeliveryInfoTextDTO, DeliveryAmountDTO, PostcardAmountDTO, WorkTimeDTO
 from database import get_user, get_user_by_username, update_user_mode, update_user_role_and_mode, add_or_update_user, get_all_settings, upsert_setting, delete_setting, get_setting_by_type
+
+MAX_API_BASE = "https://platform-api.max.ru"
 
 logger = logging.getLogger(__name__)
 
@@ -49,9 +53,12 @@ async def get_current_user(auth_data: dict = Depends(verify_init_data_with_name)
 @router.get("/support-chat-id", response_model=SupportChatDTO)
 async def get_support_chat_id(user_id: int = Depends(verify_init_data)):
     """
-    Get support chat id for feedback
+    Get support chat link for feedback.
 
-    Requires valid Max WebApp initData in Authorization header
+    Fetches the numeric chat ID from settings, then resolves it
+    to a link via Max Bot API (GET /chats/{chatId}).
+
+    Requires valid Max WebApp initData in Authorization header.
     """
     logger.info(f"Fetching support chat id for user_id={user_id}")
 
@@ -62,7 +69,32 @@ async def get_support_chat_id(user_id: int = Depends(verify_init_data)):
             detail="Support chat ID not configured"
         )
 
-    return SupportChatDTO(value=setting["value"])
+    chat_id = setting["value"].strip()
+
+    # If the value is a numeric chat ID, resolve it to a link via Bot API
+    if chat_id.lstrip('-').isdigit():
+        bot_token = os.getenv("BOT_TOKEN")
+        if not bot_token:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="BOT_TOKEN not configured"
+            )
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    f"{MAX_API_BASE}/chats/{chat_id}",
+                    headers={"Authorization": bot_token},
+                )
+                resp.raise_for_status()
+                chat_data = resp.json()
+                link = chat_data.get("link")
+                if link:
+                    return SupportChatDTO(value=link)
+                logger.warning(f"Chat {chat_id} has no link field, returning raw ID")
+        except Exception as e:
+            logger.error(f"Failed to fetch chat link from Max API for chat_id={chat_id}: {e}")
+
+    return SupportChatDTO(value=chat_id)
 
 
 @router.get("/payment-info-text", response_model=PaymentInfoTextDTO)
