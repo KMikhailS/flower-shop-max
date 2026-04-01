@@ -1,7 +1,7 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from auth import verify_init_data, verify_admin_mode
+from auth import verify_init_data, verify_init_data_with_name, verify_admin_mode
 from models import UserInfoDTO, UserModeUpdateRequest, PhoneUpdateRequest, UserUpdateRequest, SettingDTO, SettingRequest, SupportChatDTO, PaymentInfoTextDTO, DeliveryInfoTextDTO, DeliveryAmountDTO, PostcardAmountDTO, WorkTimeDTO
 from database import get_user, get_user_by_username, update_user_mode, update_user_role_and_mode, add_or_update_user, get_all_settings, upsert_setting, delete_setting, get_setting_by_type
 
@@ -11,13 +11,19 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/me", response_model=UserInfoDTO)
-async def get_current_user(user_id: int = Depends(verify_init_data)):
+async def get_current_user(auth_data: dict = Depends(verify_init_data_with_name)):
     """
     Get current user information
 
     Requires valid Max WebApp initData in Authorization header
     """
+    user_id = auth_data["user_id"]
+    display_name = auth_data["display_name"]
     logger.info(f"Fetching user info for user_id={user_id}")
+
+    # Update username from initData on every request
+    if display_name:
+        await add_or_update_user(user_id, username=display_name)
 
     # Get user from database
     user = await get_user(user_id)

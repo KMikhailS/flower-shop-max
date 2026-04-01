@@ -140,7 +140,7 @@ async def handle_bot_started(bot: MaxBotClient, update: dict):
     user = update.get("user", {})
     chat_id = update.get("chat_id")
     user_id = user.get("user_id")
-    username = user.get("username")
+    username = user.get("username") or user.get("name")
 
     # Save user to database
     await add_or_update_user(user_id=user_id, username=username)
@@ -173,7 +173,7 @@ async def handle_message_created(bot: MaxBotClient, update: dict):
     chat_id = message.get("recipient", {}).get("chat_id")
 
     if text == "/start":
-        username = sender.get("username")
+        username = sender.get("username") or sender.get("name")
         await add_or_update_user(user_id=user_id, username=username)
         await handle_bot_started(bot, {"user": sender, "chat_id": chat_id})
         return

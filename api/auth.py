@@ -80,6 +80,21 @@ def _verify_max_init_data(init_data_str: str, bot_token: str) -> dict:
     return user
 
 
+def _extract_display_name(user: dict) -> str | None:
+    """Extract display name from MAX user object.
+
+    Tries first_name + last_name, falls back to username.
+    """
+    parts = []
+    if user.get("first_name"):
+        parts.append(user["first_name"])
+    if user.get("last_name"):
+        parts.append(user["last_name"])
+    if parts:
+        return " ".join(parts)
+    return user.get("username") or None
+
+
 async def verify_init_data(authorization: str = Header(...)) -> int:
     """
     Verify MAX WebApp initData and extract user_id.
@@ -120,6 +135,48 @@ async def verify_init_data(authorization: str = Header(...)) -> int:
         user_id = user["id"]
         logger.info(f"Successfully authenticated user {user_id}")
         return user_id
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized"
+        )
+
+
+async def verify_init_data_with_name(authorization: str = Header(...)) -> dict:
+    """
+    Verify MAX WebApp initData and extract user_id + display name.
+
+    Returns:
+        dict: {"user_id": int, "display_name": str | None}
+    """
+    if not authorization or not authorization.startswith("tma "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized"
+        )
+
+    init_data_str = authorization.replace("tma ", "", 1)
+
+    if not init_data_str:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized"
+        )
+
+    bot_token = os.getenv("BOT_TOKEN")
+    if not bot_token:
+        logger.error("BOT_TOKEN not found in environment")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Server configuration error"
+        )
+
+    try:
+        user = _verify_max_init_data(init_data_str, bot_token)
+        user_id = user["id"]
+        display_name = _extract_display_name(user)
+        logger.info(f"Successfully authenticated user {user_id}, display_name={display_name}")
+        return {"user_id": user_id, "display_name": display_name}
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
