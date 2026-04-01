@@ -89,6 +89,7 @@ async def get_support_chat_id(user_id: int = Depends(verify_init_data)):
                 chat_data = resp.json()
                 link = chat_data.get("link")
                 if link:
+                    logger.info(f"Resolved support chat link for chat_id={chat_id}: {link}")
                     return SupportChatDTO(value=link)
                 logger.warning(f"Chat {chat_id} has no link field, returning raw ID")
         except Exception as e:
