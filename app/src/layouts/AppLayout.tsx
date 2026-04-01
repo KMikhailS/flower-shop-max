@@ -229,7 +229,7 @@ export default function AppLayout() {
       if (normalized.startsWith('-100') && normalized.length > 4) {
         return { url: `https://max.ru/c/${normalized.slice(4)}/1`, preferMax: true };
       }
-      return null;
+      return { url: `https://max.ru/chat/${normalized}`, preferMax: true };
     }
     return null;
   };
